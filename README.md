@@ -20,6 +20,11 @@ The project is a simple e-commerce (without payement system. since it dont exist
 
 How to run it :
 =====
+Of course, you **MUST** have Python installed, windows users, come here:
+
+http://python.org/download/releases/2.7.5/
+
+
 Simple, just run 
 
     app.py

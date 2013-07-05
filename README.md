@@ -33,4 +33,6 @@ https://github.com/selwin/python-user-agents
 
 How to run it :
 =====
-Simple, just run app.py and go to http://localhost:8000
+Simple, just run app.py (sudo python app.py ou sur windows directement double cliquez sur app.py ou ouvrez le avec un editeur)  and go to the url (in your browser) http://localhost:8000
+
+

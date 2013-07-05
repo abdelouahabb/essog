@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<!-- ce que c'est beau les docyptes de HTML5 -->
+<html lang="fr-FR">
+	<!-- au cas ou un iPad est utilis&eacute; cela basculera vers un clavier AZERTY au cas ou il est QWERTY -->
+	<head>
+		<meta charset=UTF-8/><!--vous allez remarquer de droles caracteres, c parceque c le moyen de les afficher sur la page web, consultez sa pour avoir le tableau http://webdesign.about.com/od/localization/l/blhtmlcodes-fr.htm -->
+		<title>Inscription</title>
+		<div id="circle">Veuillez Remplir le Formulaire</div>
+		<link href="{{ static_url("css/reg-big.css") }}" rel="stylesheet" media="screen and (min-device-width: 1280px)"><!-- Toujours servir la derniere mise a jour du fichier sans vider le cache a chaque fois -->
+		<link href="{{ static_url("css/keyboard.css") }}" rel="stylesheet" media="screen and (min-device-width: 1280px)">
+	</head>
+	
+	<body>
+		<form id="register" action="/profile" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('register').disabled = 1;">
+			<!--utiliser ce MIME-TYPE (multipart/form-data) pour pouvoir uploader les images -->
+			 {% raw xsrf_form_html() %}
+			<input type="hidden" name="statut" value="{{titre}}"/>
+			<div id="enregistrer">
+			<div class="loginn">
+			<label for="pseudo">Votre pseudo</label>
+				<input id="pseudo" name="pseudo" type="text" required placeholder="nom d'utilisateur" pattern="(\w{3,})+" title="doit contenir uniquement des lettres ou des chiffres sans espaces par exemple MouhVendeur45, minimum 3 caract&egrave;res">
+				<!--j'ai accept&eacute; les chiffres en premier parceque parfois les gens peuvent utiliser 7 ou 3 pour remplacer les lettres arabes, pour mieux comprendre les RegEx http://www.regular-expressions.info/reference.html-->
+			<label for="pass1">Votre mot de passe</label>
+				<input class="keyboardInput" id="pass1" name="pass1" type="password" required onkeypress="checkCapsLock(event);" placeholder="un mot de passe long" pattern=".{6,}" title="pour votre securit&eacute;, minimum 6 caract&egrave;res, evitez les dates de naissances ou les choses qu'un autre pourra deviner" onblur="checkPassword('pass1','pass2'); Banned('pass1')">
+			<label for="pass2">Confirmez le</label>
+ 				<input class="keyboardInput" id="pass2" name="pass2" type='password' required onkeypress="checkCapsLock(event);" placeholder="retappez le mot de passe" onblur="checkPassword('pass1','pass2'); Banned('pass1')" title="retappez le mot de passe">
+				<div id="caps-on-warning" style="visibility: hidden;">Vous avez activ&eacute; la touche majiscule</div>
+			<label for="email">Votre email</label>
+				<input class="email" name="email" type="email" required placeholder="votre email">
+			<label for="profile">Photo de Profil</label>
+            	<input name="avatar" class="avatar" type="file" id="avatar" required>
+            	
+			</div>	
+			<div class="loginn">
+				{% if titre == "particulier" %}
+				<label for="nom">Votre nom</label>
+					<input class="nom" name="nom" type="text" required placeholder="votre nom" pattern="([a-zA-Z &agrave;-&uuml;])+" title="vous n'&ecirc;tes pas un robot j'&eacute;spere!"> <!--notez bien l'expression reguliere des caracteres accentues (francais)-->
+				<label for="prenom">Votre pr&eacute;nom</label>
+					<input class="prenom" name="prenom" type="text" required placeholder="votre pr&eacute;nom" pattern="([a-zA-Z &agrave;-&uuml;])+" title="vous n'&ecirc;tes pas un robot j'&eacute;spere!">
+				<label for="tel">N<sup>o</sup> de t&eacute;l&eacute;phone portable</label>
+					<input class="tel" name="tel" type="tel" placeholder="exemple 0777777777" title="sans espaces ni tiret (-) exemple 0777777777" pattern="0[5-7][5-9][0-9]{7}" required/>
+				<label for="daten">Votre date de naissance</label>
+					<input class="daten" name="daten" type="date" max="{{datemin}}" required title="du type AAAA-MM-JJ et vous devez avoir 18 ans minimum" placeholder="exemple 1901-01-01" pattern="19[0-9]{2}-[0-9]{2}-[0-9]{2}"/>
+				<label for="sexe">Vous &ecirc;tes</label>
+					<select required class="sexe" name="sexe">
+					<option value="">-----</option>
+					<option value="Homme">Homme</option>
+					<option value="Femme">Femme</option>
+					</select>
+				{% else %}
+				<label for="tel">N<sup>o</sup> de t&eacute;l&eacute;phone portable</label>
+					<input class="tel" type="tel" name="tel" placeholder="votre num&eacute;ro de tel" title="sans espaces ni tiret (-) exemple 0777777777" pattern="0[5-7][5-9][0-9]{7}" required/>
+				<label for="telf">N<sup>o</sup> de t&eacute;l&eacute;phone fixe (ou FAX)</label>
+					<input class="telf" type="tel" name="telf" placeholder="votre num&eacute;ro de tel" title="sans espaces ni tiret (-) exemple 026000000" pattern="0[2-4][0-9]{7}" required/>
+				{% end %}
+			<label for="wilaya">Votre wilaya (son si&egrave;ge)</label>
+				<select name="wilaya" required onchange="srcChange(this.value)">
+				<option value = "">-----</option>
+				<option value = "1">Adrar</option>
+				<option value = "2">Chlef</option>
+				<option value = "3">Laghouat</option>
+				<option value = "4">Oum El Bouaghi</option>
+				<option value = "5">Batna</option>
+				<option value = "6">Bejaia</option>
+				<option value = "7">Biskra</option>
+				<option value = "8">Bechar</option>
+				<option value = "9">Blida</option>
+				<option value = "10">Bouira</option>
+				<option value = "11">Tamanrasset</option>
+				<option value = "12">Tebessa</option>
+				<option value = "13">Tlemcen</option>
+				<option value = "14">Tiaret</option>
+				<option value = "15">Tizi Ouzou</option>
+				<option value = "16">Alger</option>
+				<option value = "17">Djelfa</option>
+				<option value = "18">Jijel</option>
+				<option value = "19">Setif</option>
+				<option value = "20">Saida</option>
+				<option value = "21">Skikda</option>
+				<option value = "22">Sidi Bel Abbes</option>
+				<option value = "23">Annaba</option>
+				<option value = "24">Guelma</option>
+				<option value = "25">Constantine</option>
+				<option value = "26">Medea</option>
+				<option value = "27">Mostaganem</option>
+				<option value = "28">MSila</option>
+				<option value = "29">Mascara</option>
+				<option value = "30">Ouargla</option>
+				<option value = "31">Oran</option>
+				<option value = "32">El Bayadh</option>
+				<option value = "33">Illizi</option>
+				<option value = "34">Bordj Bou Arreridj</option>
+				<option value = "35">Boumerdes</option>
+				<option value = "36">El Tarf</option>
+				<option value = "37">Tindouf</option>
+				<option value = "38">Tissemsilt</option>
+				<option value = "39">El Oued</option>
+				<option value = "40">Khenchela</option>
+				<option value = "41">Souk Ahras</option>
+				<option value = "42">Tipaza</option>
+				<option value = "43">Mila</option>
+				<option value = "44">Ain Defla</option>
+				<option value = "45">Naama</option>
+				<option value = "46">Ain Temouchent</option>
+				<option value = "47">Ghardaia</option>
+				<option value = "48">Relizane</option>
+			</select>
+			<label for="commune">Votre ville</label>
+				<select id="commune" name="commune" required>
+					<option>Votre Ville</option>
+				</select>
+			<label for="site">Votre site personnel</label>
+            	<input name="site" class="site" type="url" title="il doit comporter le http://" placeholder="http://www.exemple.dz" value="http://">
+			</div>
+			<div class="loginn" id="cond"><p>En validant votre inscription, vous acceptez les <a href="/condition" id="condi" target="_blank">Conditions d'Utilisation</a></p></div>			
+			<div class="loginn">
+			<script>function miaw()
+					{
+					return confirm("Confirmez votre enregistrement?")
+					}
+					</script>
+			<input id="validate" type="submit" value="Confirmer" onclick="return miaw()"/>
+			<input id="novalidate" type="submit" value="Server valid" formnovalidate/><!-- utilisez ce bouton pour tester serverside validation (cote server)-->
+		</div>
+
+			</div>
+					</form>
+		
+		
+			<!--http://www.scottpreston.com/articles/1442.php-->
+			<video id="vid" autoplay style="border-radius: 10px">&nbsp;</video>
+			<canvas id="canvas" width="640" height="480" style="border:1px solid #d3d3d3; border-radius: 10px">&nbsp;</canvas><br>
+			<button onclick="snapshot()">Prendre Photo!</button>
+			
+			<script type="text/javascript">
+			
+			    var video = document.querySelector("#vid");
+			    var canvas = document.querySelector('#canvas');
+			    var ctx = canvas.getContext('2d');
+			    var localMediaStream = null;
+			
+			    var onCameraFail = function (e) {
+			        window.alert('Camera ne marche pas!', e);
+			    };
+			
+			    function snapshot() {
+			        if (localMediaStream) {
+			            ctx.drawImage(video, 0, 0);
+			        }
+			    }
+			
+			    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+			    window.URL = window.URL || window.webkitURL;
+			    navigator.getUserMedia({video:true}, function (stream) {
+			        video.src = window.URL.createObjectURL(stream);
+			        localMediaStream = stream;
+			    }, onCameraFail);
+			    a = canvas.toDataURL("image/jpeg");
+			    document.getElementById("avatar").src = a;
+			
+			</script>
+
+		
+		<!-- Toujours mettre les javascript en dernier, pour ne pas bloquer la page Ã  attendre le script se termier-->
+		<script src="{{ static_url("js/villes.js") }}"></script>
+		<script src="{{ static_url("js/password.js") }}"></script>
+		<script src="{{ static_url("js/caps.js") }}"></script>
+		<script src="{{ static_url("js/keyboard.js") }}"></script>
+		<noscript>
+			<em id="noscript">Activez Javascript de votre navigateur pour vous inscrire! cliquez <a href="/javascript.html">ici</a></em>
+		</noscript>
+	</body>
+</html>

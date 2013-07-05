@@ -1,0 +1,125 @@
+{% include header.html %}
+{% import babel.numbers %}
+{% from simpleencode import b64decode, encode %}
+
+{% if produits==[] %}
+{% if op=="vente" %}
+<h1 class="hhh">Vous n'avez aucun produit &agrave; vendre,<br /> Cliquez <a href="http://localhost:8000/profil#vendr">ici</a> pour pouvoir ajouter des produits.</h1>
+{% elif op=="achat" %}
+<h1 class="hhh">Vous n'avez aucun produit ajout&eacute;,<br /> Cliquez <a href="http://localhost:8000/profil#acheter">ici</a> pour pouvoir ajouter des produits.</h1>
+{% elif op=="srch" %}
+<h1 class="hhh">Il n y a Pas de r&eacute;sultats &agrave; Afficher</h1>
+{% end %}
+
+{% else %}
+
+{% for produit in produits %}
+<div class="produit">
+<div class="sel3a">
+	<span>Produit # {{produits.index(produit)+1+s}}</span>
+	<span class="nom"><div class="tit">Le Nom du Produit:</div> {{produit["spec"]["np"]}}</span>
+	<span class="prix"><div class="tit">Son Prix:</div> {{babel.numbers.format_currency(produit["spec"]["pri"],"",locale="fr_FR")}} DA</span>
+	<input type="hidden" id='{{str(produit["avt"]["fto"])}}' value="{{produit["spec"]["pri"]}}"/>
+	<span class="etat"><div class="tit">&Eacute;tat du Produit: </div>{{produit["spec"]["eta"].upper()}}</span>
+	<span class="desc"><div class="tit"> Description:</div> {{produit["spec"]["dsp"]}}</span>
+	<span><div class="tit">Publi&eacute; Le </div><code>{{str(produit["spec"]["dt"])[0:10]}} &agrave; {{str(produit["spec"]["dt"])[11:16]}}</code></span>
+	<span><div class="tit">Acc&egrave;pte l'&Eacute;change: </div>{{produit["spec"]["chng"].upper()}}</span>
+	<form action="/info" class="supprimer">
+		<input type="hidden" value="{{str(produit["avt"]["fto"])}}" name="id" />
+		<input type="submit" value="Page du produit" />
+	</form>
+<!-- and here we go with conditions-->
+
+{% if b64decode(produit["spec"]["own"]) != email %}
+			<div class="supprimer" >
+				{% if str(produit["avt"]["fto"]) in achat %}
+				<form method="post" action="enlever">
+					{% raw xsrf_form_html() %}
+					<input type="hidden" value="{{str(produit["avt"]["fto"])}}" name="enleve"/>
+					<input type="submit" value="Enlever" />
+				</form>
+				{% else %}
+				<form class="supprimer" method="post" action="/cart">
+					{% raw xsrf_form_html() %}
+					<input type="hidden" value="{{str(produit["avt"]["fto"])}}" name="prod"/>
+					<script>function miaw()
+					{
+					var c=confirm("Voulez-Vous ajouter ce produit dans votre liste!")
+					if (c==false)
+					{return false}
+					}
+					</script>					
+				<input type="submit" value="Ajouter au Panier!" onclick="return miaw()"/>
+				</form>
+
+				{% end %}
+			<div class="report" >
+				<form name="abus" class="report" method="post" action="/report">
+					{% raw xsrf_form_html() %}
+					<input type="hidden" value="{{encode(str(produit["avt"]["fto"]), email[5::-1])}}" name="prod"/>
+					<script>function miaws()
+					{
+					return alert("Merci d'avoir reporté ce produit")
+					}
+					</script>					
+					<div class="report">
+						<input type="submit" value="Non Conforme?" onclick="return miaws()" class="reporter"/>
+					</div>
+				</form>
+			</div>
+			</div>
+			{% else %}
+				<h1>&nbsp;</h1>
+			{% end %}
+</div>
+
+<div class="to">
+	{% if produit["avt"]["ori"]=="portrait" %}
+	<img src="/{{avatar[produits.index(produit)]}}" class="ima" height="300px">
+	{% else %}
+	<img src="/{{avatar[produits.index(produit)]}}" class="ima" width="300px">
+	{% end %}
+
+	{% if b64decode(produit["spec"]["own"])==email %}
+	
+	<form method="post" action="/rabai" class="supprimer">
+		{% raw xsrf_form_html() %}
+		<input id='{{str(produit["avt"]["fto"])}}a' class="rabai" name="rabai" type="number" placeholder="Votre % du Solde" min="5" max="90" title="Entre 5% et 90%" onkeyup="document.getElementById('{{str(produit["avt"]["fto"])}}b').value = Rabais('{{str(produit["avt"]["fto"])}}a', '{{str(produit["avt"]["fto"])}}'); Solde('{{str(produit["avt"]["fto"])}}c', '{{str(produit["avt"]["fto"])}}b')" onchange="document.getElementById('{{str(produit["avt"]["fto"])}}b').value = Rabais('{{str(produit["avt"]["fto"])}}a', '{{str(produit["avt"]["fto"])}}'); Solde('{{str(produit["avt"]["fto"])}}c', '{{str(produit["avt"]["fto"])}}b')">
+		<input type="hidden" name="new" id='{{str(produit["avt"]["fto"])}}b' onchange="Rabai('{{str(produit["avt"]["fto"])}}c', '{{str(produit["avt"]["fto"])}}b')"/>
+		<input type="hidden" name="id" value="{{encode(str(produit["avt"]["fto"]), email[5::-1])}}" />
+		<h3 id='{{str(produit["avt"]["fto"])}}c'>&nbsp;</h3>
+		<input type="submit" value="Solder!" />
+	</form>
+	
+	<form name="supprimer" class="supprimer" method="post" action="/supprimer">
+		{% raw xsrf_form_html() %}
+		<input type="hidden" value="{{encode(str(produit["avt"]["fto"]), email[5::-1])}}" name="supprime"/>
+		<script>
+			function miaw() {
+				return confirm("Voulez-Vous vraiment SUPPRIMER le produit DÉFINITIVEMENT!")
+			}
+		</script>
+		<input type="submit" value="Supprimer!" onclick="return miaw()"/>
+	</form>
+	
+	{% end %}
+	
+</div>
+
+</div>
+		
+{% end %}
+{% end %}
+
+<div id="pages">
+{% if op =="srch" and link[-2:] != "=0" and len(produits) > 0 %}
+<a href="{{lin+'?'+replace.sub('s={0}'.format(s-5), link)}}" id="prev" title="Afficher les R&eacute;sultats Pr&eacute;c&eacute;dent">&nbsp;</a>
+{% end %}
+
+{% if npages > 0 %}
+<a href="{{lin+'?'+replace.sub('s={0}'.format(s+5), link)}}" id="next" title="Afficher les R&eacute;sultats Suivant">&nbsp;</a>
+{% end %}
+</div>
+
+</body>
+</html>

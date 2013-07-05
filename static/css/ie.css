@@ -1,0 +1,14 @@
+body{background-image: url("../img/back.jpg"); background-size: 20px 40px; font-family:verdana}
+#alerte{-ms-transition: all .4s}
+#alerte:hover{color:orange}
+#logo-ie{height:120px;background-image: url("../img/no-ie.png");background-repeat: no-repeat; opacity:0.2}
+#logo-ie:hover{opacity:1}
+#choix, li{margin: 20px}
+#choix:hover{color:white}
+li:hover{font-size:1.1em}
+a:hover{color:orange}
+#opera{list-style-image:url("../img/opera.png")}
+#chrome{list-style-image:url("../img/chrome.png")}
+#safari{list-style-image:url("../img/safari.png")}
+#firefox{list-style-image:url("../img/firefox.png")}
+#maxthon{list-style-image:url("../img/maxthon.png")}

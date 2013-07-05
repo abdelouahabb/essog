@@ -1,0 +1,157 @@
+{% include header.html %}
+	<title>R&eacute;sultats</title>
+		<link href="{{ static_url("css/profil.css") }}" rel="stylesheet" media="screen and (min-device-width: 1280px)">
+		<div class="menus">
+			<nav><a href="#pseudo">R&eacute;sultats selon le nom d'utilisateur:
+				{% if resultpseudo == 0 %}
+					<b>Aucun R&eacute;sultat</b>
+					{% else %}
+					<b>{{resultpseudo}} R&eacute;sultats<b>
+					{% end %}
+				</a></nav>
+				<section id="pseudo">
+					{% if resultpseudo == 0 %}
+					<h1>Vous n'avez aucun R&eacute;sultat</h1>
+					{% else %}
+					<h1>Vous avez {{resultpseudo}} R&eacute;sultats</h1>
+					<form action="/search-pseudo" onsubmit="document.getElementById('pseudos').disabled = 1" class="supprimer">
+						<input type="hidden" name="pseudo" value="{{pseudo}}"/>
+						<input type="hidden" name="s" value="0"/>
+						<input type="submit" value="Voir les résultats" id="pseudos" />
+					</form>
+					{% end %}	
+				</section>
+		</div>
+		<div class="menus">
+			<nav><a href="#tel">R&eacute;sultats selon le num&eacute;ro de t&eacute;l&eacute;phone:
+				{% if resultel == 0 %}
+					<b>Aucun R&eacute;sultat</b>
+					{% else %}
+					<b>{{resultel}} R&eacute;sultats</b>
+					{% end %}
+				</a></nav>
+				<section id="tel">
+					{% if resultel == 0 %}
+					<h1>Vous n'avez aucun R&eacute;sultat</h1>
+					{% else %}
+					<h1>Vous avez {{resultel}} R&eacute;sultats</h1>
+					<form action="/search-tel" onsubmit="document.getElementById('telf').disabled = 1" class="supprimer">
+						<input type="hidden" name="tel" value="{{tel}}"/>
+						<input type="hidden" name="s" value="0"/>
+						<input type="submit" value="Voir les résultats" id="telf" />
+					</form>
+					{% end %}	
+				</section>
+		</div>
+		<div class="menus">
+			<nav><a href="#nomp">R&eacute;sultats selon le nom du produit:
+				{% if total0 == 0 %}
+					<b>Aucun R&eacute;sultat</b>
+					{% else %}
+					<b>{{total0}} R&eacute;sultats</b>
+					{% end %}</a></nav>
+				<section id="nomp">
+					{% if total0 == 0 %}
+					<h1>Vous n'avez aucun R&eacute;sultat</h1>
+					{% else %}
+					<h1>Vous avez {{total0}} R&eacute;sultats</h1>
+					<form action="/search-nomp" onsubmit="document.getElementById('nomps').disabled = 1" class="supprimer">
+						<input type="hidden" name="nomp" value="{{nomp}}"/>
+						<input type="hidden" name="s" value="0"/>
+						<input type="submit" value="Voir les résultats" id="nomps" />
+					</form>
+					{% end %}
+				</section>
+		</div>
+		<div class="menus">
+			<nav><a href="#description">R&eacute;sultats selon la description du produit:
+				{% if total1 == 0 %}
+					<b>Aucun R&eacute;sultat</b>
+					{% else %}
+					<b>{{total1}} R&eacute;sultats</b>
+					{% end %}</a></nav>
+				<section id="description">
+					{% if total1 == 0 %}
+					<h1>Vous n'avez aucun R&eacute;sultat</h1>
+					{% else %}
+					<h1>Vous avez {{total1}} R&eacute;sultats</h1>
+					<form action="/search-desc" onsubmit="document.getElementById('descs').disabled = 1" class="supprimer">
+						<input type="hidden" name="description" value='{{description[0].strip("[]")}}'/>
+						<input type="hidden" name="s" value="0"/>
+						<input type="submit" value="Voir les résultats" id="descs" />
+					</form>
+					{% end %}
+				</section>
+		</div>
+		<div class="menus">
+			<nav><a href="#max">R&eacute;sultats selon le prix:
+					{% if total2 == 0 %}
+					<b>Aucun R&eacute;sultat</b>
+					{% else %}
+					<b>{{total2}} R&eacute;sultats</b>
+					{% end %}
+					</a></nav>
+				<section id="max">
+					{% if total2 == 0 %}
+					<h1>Vous n'avez aucun R&eacute;sultat</h1>
+					{% else %}
+					<h1>Vous avez {{total2}} R&eacute;sultats</h1>
+					<form action="/search-sommcr" onsubmit="document.getElementById('sommes').disabled = 1" class="supprimer">
+						<input type="hidden" name="sommemax" value="{{sommemax}}"/>
+						<input type="hidden" name="sommemin" value="{{sommemin}}"/>
+						<input type="hidden" name="s" value="0"/>
+						<input type="submit" value="- vers + Cher" id="sommes" />
+					</form>
+					
+					<form action="/search-somdsc" onsubmit="document.getElementById('sommdsc').disabled = 1" class="supprimer">
+						<input type="hidden" name="sommemax" value="{{sommemax}}"/>
+						<input type="hidden" name="sommemin" value="{{sommemin}}"/>
+						<input type="hidden" name="s" value="0"/>
+						<input type="submit" value="+ vers - Cher" id="sommdsc" />
+					</form>
+					
+					{% end %}
+				</section>
+				
+		</div>
+		<div class="menus">
+			<nav><a href="#commune">R&eacute;sultats selon la commune:
+				{% if resultcommune == 0 %}
+					<b>Aucun R&eacute;sultat</b>
+					{% else %}
+					<b>{{resultcommune}} R&eacute;sultats</b>
+					{% end %}</a></nav>
+				<section id="commune">
+					{% if resultcommune == 0 %}
+					<h1>Vous n'avez aucun R&eacute;sultat</h1>
+					{% else %}
+					<h1>Vous avez {{resultcommune}} R&eacute;sultats</h1>
+					<form action="/search-commune" onsubmit="document.getElementById('communes').disabled = 1" class="supprimer">
+						<input type="hidden" name="commune" value="{{commune}}"/>
+						<input type="hidden" name="s" value="0"/>
+						<input type="submit" value="Voir les résultats" id="communes" />
+					</form>
+					{% end %}
+				</section>
+		</div>
+		<div class="menus">
+			<nav><a href="#perim">R&eacute;sultats selon le perimetre:
+				{% if resultperim == 0 %}
+					<b>Aucun R&eacute;sultat</b>
+					{% else %}
+					<b>{{resultperim}} R&eacute;sultats</b>
+					{% end %}</a></nav>
+				<section id="perim">
+					{% if resultperim == 0 %}
+					<h1>Vous n'avez aucun R&eacute;sultat</h1>
+					{% else %}
+					<h1>Vous avez {{resultperim}} R&eacute;sultats</h1>
+					<form action="/search-coord" onsubmit="document.getElementById('perime').disabled = 1" class="supprimer">
+						<input type="hidden" name="perim" value="{{perim}}"/>
+						<input type="hidden" name="s" value="0"/>
+						<input type="submit" value="Voir les résultats" id="perime" />
+					</form>
+					{% end %}
+				</section>
+		</div>
+

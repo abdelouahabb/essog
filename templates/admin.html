@@ -1,0 +1,65 @@
+{% include headmin.html %}
+{% import babel.numbers %}
+{% from simpleencode import b64decode %}
+
+{% for produit in produits %}
+
+<div class="produit">
+<div class="sel3a">
+	<span>Produit # {{produits.index(produit)+1+s}}</span>
+	<span class="mail"><div class="tit">Publie par:</div> {{b64decode(produit["spec"]["own"])}}</span>
+	<span class="nom"><div class="tit">Le Nom du Produit:</div> {{produit["spec"]["np"]}}</span>
+	<span class="prix"><div class="tit">Son Prix:</div> {{babel.numbers.format_currency(produit["spec"]["pri"],"",locale="fr_FR")}} DA</span>
+	<input type="hidden" id='{{str(produit["avt"]["fto"])}}' value="{{produit["spec"]["pri"]}}"/>
+	<span class="etat"><div class="tit">&Eacute;tat du Produit: </div>{{produit["spec"]["eta"].upper()}}</span>
+	<span class="desc"><div class="tit">Description:</div> {{produit["spec"]["dsp"]}}</span>
+	<span><div class="tit">Publi&eacute; Le </div><code>{{str(produit["spec"]["dt"])[0:10]}} &agrave; {{str(produit["spec"]["dt"])[11:16]}}</code></span>
+	<span><div class="tit">Acc&egrave;pte l'&Eacute;change: </div>{{produit["spec"]["chng"].upper()}}</span>
+	{% try %}
+
+	{% if produit["nab"] > 0 %}
+	<span class="mail"><div class="tit">Signal&eacute;</div> {{produit["nab"]}} fois</span>
+	<span class="mail"><div class="tit">Par:</div> {% for i in produit["abu"] %} {{i }} {% end %}</span>
+	{% end %}
+	{% except %}
+	{% end %}
+	<form action="/info" class="supprimer">
+		<input type="hidden" value="{{str(produit["avt"]["fto"])}}" name="id" />
+		<input type="submit" value="Page du produit" />
+	</form>
+
+</div>
+
+<div class="to">
+	{% if produit["avt"]["ori"]=="portrait" %}
+	<img src="/{{avatar[produits.index(produit)]}}" class="ima" height="300px">
+	{% else %}
+	<img src="/{{avatar[produits.index(produit)]}}" class="ima" width="300px">
+	{% end %}
+	
+	<form name="supprimer" class="supprimer" method="post" action="/supprimer">
+		{% raw xsrf_form_html() %}
+		<input type="hidden" value="{{str(produit["avt"]["fto"])}}" name="supprime"/>
+		<script>
+			function miaw() {
+				return confirm("Voulez-Vous vraiment SUPPRIMER le produit DÉFINITIVEMENT!")
+			}
+		</script>
+		<input type="submit" value="Supprimer!" onclick="return miaw()"/>
+	</form>
+	
+</div>
+
+</div>	
+{% end %}
+<div id="pages">
+{% if len(produits) > 0 %}
+<a href="{{lin+'?'+'s'+'='+str(s-5)}}" id="prev" title="Afficher les R&eacute;sultats Pr&eacute;c&eacute;dent">&nbsp;</a>
+{% end %}
+
+{% if npages > 0 %}
+<a href="{{lin+'?'+'s'+'='+str(s+5)}}" id="next" title="Afficher les R&eacute;sultats Suivant">&nbsp;</a>
+{% end %}
+</div>
+</body>
+</html>

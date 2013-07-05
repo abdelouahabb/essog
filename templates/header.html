@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<!-- ce que c'est beau les docyptes de HTML5 -->
+<html lang="fr-FR">
+	<head>
+		<meta charset=UTF-8/>
+		<link href="{{ static_url("css/profil.css") }}" rel="stylesheet" media="screen and (min-device-width: 1280px)">
+		<link href="{{ static_url("css/keyboard.css") }}" rel="stylesheet" media="screen and (min-device-width: 1280px)">
+	<noscript>
+		<em id="noscript">Activez Javascript de votre navigateur pour vous inscrire! cliquez <a href="/javascript.html">ici</a></em>
+	</noscript>
+	</head>
+	
+	<body>
+		<header>
+			<script>
+				function mia() {
+					return confirm("Vous voulez vraiment deconnecter?")
+				}
+			</script>
+			<div class="header">
+				<a href="logout" onclick="return mia()">Deconnexion</a>
+			</div>
+			<div class="header">
+				<a href="achats">Mes Achats</a>
+			</div>
+			<div class="header">
+				<a href="ventes">Mes Ventes</a>
+			</div>
+			<div class="header">
+				<a href="profil#acheter">Acheter</a>
+			</div>
+			<div class="header">
+				<a href="profil#vendr">Vendre</a>
+			</div>
+			<div class="header">
+				<a href="profil#profil">Page Principale</a>
+			</div>
+		
+		<script src="{{ static_url("js/keyboard.js") }}"></script>
+		<script src="{{ static_url("js/formatter.js") }}"></script>
+		</header>

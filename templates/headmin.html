@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!-- ce que c'est beau les docyptes de HTML5 -->
+<html lang="fr-FR">
+	<head>
+		<meta charset=UTF-8/>
+		<link href="{{ static_url("css/profil.css") }}" rel="stylesheet" media="screen and (min-device-width: 1280px)">
+		<link href="{{ static_url("css/keyboard.css") }}" rel="stylesheet" media="screen and (min-device-width: 1280px)">
+	<noscript>
+		<em id="noscript">Activez Javascript de votre navigateur pour vous inscrire! cliquez <a href="/javascript.html">ici</a></em>
+	</noscript>
+	</head>
+	
+	<body>
+		<header>
+			<script>
+				function mia() {
+					return confirm("Vous voulez vraiment deconnecter?")
+				}
+			</script>
+			<div class="header">
+				<a href="/galien/logout" onclick="return mia()">Deconnexion</a>
+			</div>
+			<div class="header">
+				<a href="all">Tout les produits</a>
+			</div>
+			<div class="header">
+				<a href="perime">Produits P&eacute;rim&eacute;s</a>
+			</div>
+			<div class="header">
+				<a href="abu">Produits signal&eacute;s</a>
+			</div>
+			<div class="header">
+				<a href="password">Mot de passe P&eacute;rim&eacute;s</a>
+			</div>
+		
+		<script src="{{ static_url("js/keyboard.js") }}"></script>
+		<script src="{{ static_url("js/formatter.js") }}"></script>
+		</header>

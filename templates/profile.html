@@ -1,0 +1,198 @@
+{% include header.html %}
+
+<script src="{{ static_url("js/villes.js") }}"></script>
+
+<title>Bienvenu {{pseudo}}</title>
+
+<div class="men">
+	<nav>
+		<a href="#profil">Bienvenu {{pseudo}}</a>
+	</nav>
+	<section id="profil">
+		<div class="sel3a" >
+			{% if statut=="particulier" %}
+			{% if sexe=="Homme" %}
+			<span><h3>Monsieur : {{nom.upper()}} {{prenom.title()}}</h3></span>
+			{% elif sexe=="Femme" %}
+			<span><h3>Madame/Mademoiselle : {{nom.upper()}} {{prenom.title()}}</h3></span>
+			{% end %}
+			{% else %}
+			<span>Votre numero fixe est {{telf}}</span>
+			<span>Votre numero de telephone est {{tel}}</span>
+			{% end %}
+			{% if site!="" %}
+			<span>Votre email est {{email}}</span>
+			<span><a href="/change">Changer Votre mot de passe!</a></span>
+			<span><a href="{{site}}">Votre site personnel: {{site}}</a></span>
+			{% end %}
+			{% if achats == 0 %}
+			<span>Vous n'avez aucun produit, <a href="/profil#acheter">Commencer les Achats?</a></span> 
+			{% else %}
+			<span>Vous avez achet&eacute; <big style="color: orange">{{achats}}</big> produits.
+				<a href="/achats">Consulter vos Achats</a>
+				<a href="/profil#acheter">Acheter un autre produit</a>
+			{% end %}
+			</span>
+			
+			{% if ventes == 0 %}
+			<span>Vous n'avez aucun produit, <a href="/profil#vendr">Commencer les Ventes?</a></span>
+			{% else %}
+			<span>Vous avez <big style="color: orange">{{ventes}}</big> produits en vente. 
+				<a href="/ventes">Consulter vos Ventes</a>
+				<a href="/profil#vendr">Vendre un autre produit</a>
+			{% end %}
+			</span>
+		</div>
+		
+<div class="to">
+	{% if orientation=="portrait" %} <!-- cette technique pour eviter les images a y etre deformees -->
+	<img src="/{{avatar}}" class="ima"><style>.ima{height: 300px} .ima:hover{height:470px}</style>
+			{% else %}
+			<img src="/{{avatar}}" class="ima"><style>.ima{width: 300px} .ima:hover{width:470px}</style>
+			{% end %}
+</div>
+			
+	</section>
+
+	<div class="me">
+		<nav>
+			<a href="#vendr">Vous Voulez Vendre ?</a>
+		</nav>
+		<section id="vendr">
+			<form id="formvente" action="/vendre" name="formvente"  method="post" enctype="multipart/form-data">
+				{% raw xsrf_form_html() %}
+				<label for="namep">Le nom du Produit</label>
+				<input class="keyboardInput" type="text" name="namep" required title="vous devez mettre le nom du produit" placeholder="exemple: peugeot 206">
+				<label for="prix">Son prix (en Dinars Alg&eacute;rien)</label>
+				<input id="prix" type="number" name="prix" required title="vous devez mettre le prix en chiffre (en Dinars Alg&eacute;rien)" placeholder="exemple: 800000" min="1" step="1">
+				<script>
+					Forma("prix", "hhh");
+				</script>
+				<h1 id="hhh" >&nbsp;</h1>
+				<label for="echange">Accepter un &Eacute;change? </label>
+				<select name="echange" required title="Est ce que vous voulez qu'une personne vous propose un Echange">
+					<option value="oui">Non</option>
+					<option value="non">Oui</option>
+				</select>
+				<label for="etat">l'&Eacute;tat de votre produit</label>
+				<select name="etat" required title="l'&Eacute;tat de votre produit">
+					<option value="Sous-Emballage">Sous-Emballage</option>
+					<option value="Bon &Eacute;tat">Bon &Eacute;tat</option>
+					<option value="Acceptable">Acceptable</option>
+				</select>
+				<label for="photo">Une photo de votre produit</label>
+				<input type="file" required name="photo" title="Vous devez fournir une photo de votre produit!" >
+				<textarea class="keyboardInput" name="description" id="desc" rows="3" cols="60" required title="vous devez mettre une petite description" placeholder="Veuillez donner une d&eacute;scription du produit (maximum 160 caract&egrave;res)" 
+					onKeyDown='textCounter("desc", "shower")'
+					onKeyUp='textCounter("desc", "shower")'
+					onblur='textCounter("desc", "shower")'></textarea>
+				<meter name="shower" min="1" max="160" value="1" id="shower" low="30" high="140">
+				Si vous voyez ce texte c que votre navigateur n'acc&egrave;pte pas la balise &lt;meter&gt;	 
+				</meter>
+				<script>
+					function miaw() {
+						return confirm("Confirmer les information saisies?")
+					}
+				</script>
+				<label for="tags">veuillez mettre Trois (3) mots cl&eacute;s pour &ecirc;tre facilement trouv&eacute;</label>
+				<input class="keyboardInput" name="tags" class="tags" required title="vous devez mettre un mot cl&eacute;" placeholder="exemple: voiture">
+				<input class="keyboardInput" name="tags" class="tags" required title="vous devez mettre un mot cl&eacute;" placeholder="exemple: bon &eacute;tat">
+				<input class="keyboardInput" name="tags" class="tags" required title="vous devez mettre un mot cl&eacute;" placeholder="exemple: occasion">
+				<input id="vendre" type="submit" value="Mettre en Vente" onclick="return miaw()"/>
+			</form>
+		</section>
+	</div>
+	<div class="menu">
+		<nav>
+			<a href="#acheter">Vous Voulez Acheter ?</a>
+		</nav>
+		<section id="acheter">
+			<form id="formacha" name="formacha" action="/chercher" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('chercher').disabled = 1">
+				{% raw xsrf_form_html() %}
+				<label for="pseudo">Tappez le pseudo de l'utilisateur si vous le connaissez</label>
+				<input class="keyboardInput" name="pseudo" placeholder="exemple: MouhVendeur" pattern="([a-zA-Z0-9]{3,})+" title="doit contenir uniquement des lettres ou des chiffres sans espaces par exemple MouhVendeur45, minimum 3 caract&egrave;res">
+				<label for="tel">Tappez le num&eacute;ro de t&eacute;l&eacute;phone de l'utilisateur si vous le connaissez</label>
+				<input class="tel" id="tel" name="tel" type="tel" placeholder="exemple 0777777777" title="sans espaces ni tiret (-) exemple 0777777777" pattern="0[5-7][5-9][0-9]{7}"/>
+				<script>
+					Tel("tel", "telf");
+				</script>
+				<h1 id="telf"> </h1>				
+				<label for="nom">Tappez le nom de du produit que vous d&eacute;sirez rechercher</label>
+				<input class="keyboardInput" name="nom" placeholder="exemple: nokia 3310">
+				<label for="description">Tappez un mot cl&eacute; qui d&eacute;crit le produit que vous d&eacute;sirez rechercher</label>
+				<input class="keyboardInput" name="description" placeholder="exemple: nokia">
+				<label for="sommemax">&Ccedil;a co&ucirc;te au maximum (en Dinars Alg&eacute;rien)</label>
+				<input type="number" name="sommemax" class="nombre" id="max" title="doit &ecirc;tre un chiffre en Dinars Alg&eacute;rien et non en centimes"  min="0" placeholder="exemple: 10000" onkeyup="document.getElementById('hh').innerHTML = Separe('max')" onchange="document.getElementById('hh').innerHTML = Separe('max')">
+				
+				<h1 id="hh" >&nbsp;</h1>
+				<label for="sommemin">&Ccedil;a co&ucirc;te au minimum (en Dinars Alg&eacute;rien)</label>
+				<input type="number" name="sommemin" class="nombre" id="min" title="doit &ecirc;tre un chiffre en Dinars Alg&eacute;rien et non en centimes"  min="0" placeholder="exemple: 100" onblur="Compare('min', 'max')" onkeyup="document.getElementById('h').innerHTML = Separe('min')" onchange="document.getElementById('h').innerHTML = Separe('min')">
+				<h1 id="h" >&nbsp;</h1>
+				<label for="wilaya">La Wilaya o&ugrave; se retrouverait le produit</label>
+				<select name="wilaya" onchange="srcChange(this.value)">
+					<option value = "">-----</option>
+					<option value = "1">Adrar</option>
+					<option value = "2">Chlef</option>
+					<option value = "3">Laghouat</option>
+					<option value = "4">Oum El Bouaghi</option>
+					<option value = "5">Batna</option>
+					<option value = "6">Bejaia</option>
+					<option value = "7">Biskra</option>
+					<option value = "8">Bechar</option>
+					<option value = "9">Blida</option>
+					<option value = "10">Bouira</option>
+					<option value = "11">Tamanrasset</option>
+					<option value = "12">Tebessa</option>
+					<option value = "13">Tlemcen</option>
+					<option value = "14">Tiaret</option>
+					<option value = "15">Tizi Ouzou</option>
+					<option value = "16">Alger</option>
+					<option value = "17">Djelfa</option>
+					<option value = "18">Jijel</option>
+					<option value = "19">Setif</option>
+					<option value = "20">Saida</option>
+					<option value = "21">Skikda</option>
+					<option value = "22">Sidi Bel Abbes</option>
+					<option value = "23">Annaba</option>
+					<option value = "24">Guelma</option>
+					<option value = "25">Constantine</option>
+					<option value = "26">Medea</option>
+					<option value = "27">Mostaganem</option>
+					<option value = "28">MSila</option>
+					<option value = "29">Mascara</option>
+					<option value = "30">Ouargla</option>
+					<option value = "31">Oran</option>
+					<option value = "32">El Bayadh</option>
+					<option value = "33">Illizi</option>
+					<option value = "34">Bordj Bou Arreridj</option>
+					<option value = "35">Boumerdes</option>
+					<option value = "36">El Tarf</option>
+					<option value = "37">Tindouf</option>
+					<option value = "38">Tissemsilt</option>
+					<option value = "39">El Oued</option>
+					<option value = "40">Khenchela</option>
+					<option value = "41">Souk Ahras</option>
+					<option value = "42">Tipaza</option>
+					<option value = "43">Mila</option>
+					<option value = "44">Ain Defla</option>
+					<option value = "45">Naama</option>
+					<option value = "46">Ain Temouchent</option>
+					<option value = "47">Ghardaia</option>
+					<option value = "48">Relizane</option>
+				</select>
+				<label for="commune">La ville o&ugrave; se retrouverait le produit</label>
+				<input type="hidden" name="commune" value="" />
+				<select id="commune" name="commune">
+					<option>La Ville</option>
+				</select>
+				<label for="perim"><strong>Si vous voulez trouver un produit juste pr&egrave;s de chez vous, veuillez mettre le p&eacute;rim&egrave;tre de la recherche (en Kilom&egrave;tres)</strong></label>
+				<input type="range" min="0" max="1000" step="10" onchange="perim.value=this.value"/>
+				<input type="number" name="perim" min="0" max="1000" placeholder="exemple: 50">
+				<input id="chercher" type="submit" value="Chercher!" />
+			</form>
+		</section>
+	</div>
+</div>
+
+</body>
+</html>

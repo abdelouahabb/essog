@@ -10,19 +10,19 @@ Dependecies:
 
 The project is a simple e-commerce (without payement system. since it dont exists here in Algeria), it will depend one some libraries:
 
- 1. [Tornado][4]: of course, the server, the framework ;)
+ 1. [Tornado][4] : of course, the server, the framework ;)
  2. [Motor][5] (of course Pymongo) : for non-blocking access for Mongodb.
  3. [Passlib][6] : for hashing password. (you can use Bcrypt or Scrypt, but i have used windows, so they dident compile on my machine).
- 4. [PIL][7]: for pictures operations.
- 5. [Python-Amazon-Simple-Product-Api][8]: for making requests to Amazon.
- 6. [SimpleEncode][9]: to use strings to encode another string.
- 7. [User Agents][10]: to force user to use HTML5
+ 4. [PIL][7] : for pictures operations.
+ 5. [Python-Amazon-Simple-Product-Api][8] : for making requests to Amazon.
+ 6. [SimpleEncode][9] : to use strings to encode another string.
+ 7. [User Agents][10] : to force user to use HTML5
 
 How to run it :
 =====
 Of course, you **MUST** have Python installed, windows users, come here:
 
-http://python.org/download/releases/2.7.5/
+http://python.org/download/releases/2.7.5/#download
 
 
 Simple, just run 

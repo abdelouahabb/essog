@@ -1,5 +1,8 @@
 import smtplib
-
+'''
+sadly this is blocking, i try to make it unblocking.
+this will use your gmail account to send emails, you are limited to http://support.google.com/a/bin/answer.py?hl=en&answer=166852
+'''
 def send_email(client, link, pin):
 	to = client
 	gmail_user = 'you_gmail@gmail.com'

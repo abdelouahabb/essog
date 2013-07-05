@@ -1048,7 +1048,7 @@ class Rese(BaseHandler):
             print pas
             if pas :
                 yield motor.Op(db.users.update, {"_id": email}, {"$push":{"reset":{"timr":asci,"code":code}}})
-                #send_email(email, asci, code)
+                #send_email(email, asci, code) # uncomment this line if you want to send the complete link to your email box, else, you must get the link from the database and forge it by your self localhost:8000/resetYourCode
                 self.render("reset-ok.html", message = "Veuillez acc&eacute;der &agrave; votre boite aux lettres pour compl&eacute;ter l'op&eacute;ration.<br /><br />Vous devez le faire dans moins de 48 heures.")
             else:
                 self.redirect("/#register")

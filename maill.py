@@ -2,8 +2,8 @@ import smtplib
 
 def send_email(client, link, pin):
 	to = client
-	gmail_user = 'alabdelouahab@gmail.com'
-	gmail_pwd = 'miawmiaw'
+	gmail_user = 'you_gmail@gmail.com'
+	gmail_pwd = 'your password'
 	smtpserver = smtplib.SMTP("smtp.gmail.com",587)
 	smtpserver.ehlo()
 	smtpserver.starttls()

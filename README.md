@@ -30,3 +30,7 @@ https://code.google.com/p/python-simpleencode/
 
 User Agents: to force user to use HTML5
 https://github.com/selwin/python-user-agents
+
+How to run it :
+=====
+Simple, just run app.py and go to http://localhost:8000

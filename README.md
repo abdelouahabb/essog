@@ -35,6 +35,20 @@ Directly double-clic on **app.py** or **open it with a good editor**
 
 Go to the url (in your browser) [http://localhost:8000][11]
 
+**How  to download this :o**
+
+simple, just look where it is written **Download Zip** or something similar :p
+
+**How  to download the library tou said that i need it!**
+
+after doanloading the library, just uncompress it, on linux, **right clic in the directory (blank area) and choose something like Open Terminal Here**.
+
+    sudo python setup.py install
+
+or on windows, **Hold shift, right clic on a blank area on your folder (not on your file)** and choose **Open Terminal Here** or something like that
+
+    python setup.py install
+
 
   [1]: http://stackoverflow.com/
   [2]: https://groups.google.com/forum/#!forum/python-tornado

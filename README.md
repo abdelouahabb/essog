@@ -10,6 +10,9 @@ Dependecies:
 
 The project is a simple e-commerce (without payement system. since it dont exists here in Algeria), it will depend one some libraries:
 
+Tornado: of course, the server, the framework ;)
+https://github.com/facebook/tornado
+
 Motor (of course Pymongo) : for non-blocking access for Mongodb.
 https://github.com/mongodb/motor
 

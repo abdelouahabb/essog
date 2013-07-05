@@ -126,8 +126,9 @@
 			</div>
 					</form>
 		
-		
+
 			<!--http://www.scottpreston.com/articles/1442.php-->
+			<!-- this is experimental, it seems that the base64 changes i dont know why, so uncomment if you want to used the webcam api
 			<video id="vid" autoplay style="border-radius: 10px">&nbsp;</video>
 			<canvas id="canvas" width="640" height="480" style="border:1px solid #d3d3d3; border-radius: 10px">&nbsp;</canvas><br>
 			<button onclick="snapshot()">Prendre Photo!</button>
@@ -159,7 +160,7 @@
 			    document.getElementById("avatar").src = a;
 			
 			</script>
-
+			-->
 		
 		<!-- Toujours mettre les javascript en dernier, pour ne pas bloquer la page Ã  attendre le script se termier-->
 		<script src="{{ static_url("js/villes.js") }}"></script>

@@ -24,6 +24,10 @@ Of course, you **MUST** have Python installed, windows users, come here:
 
 http://python.org/download/releases/2.7.5/#download
 
+and of course, you will not work with MySql or any SQL standard, this NoSql, 
+
+http://www.mongodb.org/downloads
+
 
 Simple, just run 
 

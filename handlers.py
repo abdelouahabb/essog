@@ -411,7 +411,7 @@ class Search(BaseHandler):
             center = [0, 0]
             perim = 0
         else:
-            perim = float(perim)/6371
+            perim = float(perim)/6371 # transform meters to get radians http://stackoverflow.com/questions/17415192/how-to-use-geowithin-in-mongodb
        
         try:          
             pseud = yield motor.Op(db.users.find({"prs.pseu":pseudo}).distinct, "pup")

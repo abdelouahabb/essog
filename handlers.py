@@ -411,7 +411,7 @@ class Search(BaseHandler):
             center = [0, 0]
             perim = 0
         else:
-            perim = int(perim)
+            perim = float(perim)/6371
        
         try:          
             pseud = yield motor.Op(db.users.find({"prs.pseu":pseudo}).distinct, "pup")
@@ -733,7 +733,7 @@ class SearchCoord(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.engine
     def get(self):
-        perim = int(self.get_argument("perim"))
+        perim = float(self.get_argument("perim"))/6371
         s = int(self.get_argument("s"))
         url = self.request.uri
         lin = spliter.split(url)[0]

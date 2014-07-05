@@ -2,30 +2,29 @@
 #coding: utf-8
 
 from __future__ import division # go to future and bering that real division :D
-import tornado.web, tornado.ioloop, tornado.escape, tornado.gen, tornado.auth # tornado stuff ;)
+import tornado.web, tornado.escape, tornado.gen, tornado.auth # tornado stuff ;)
 import motor # this is the library that allows to do non-blocking I/O to mongodb ^_^
 from pymongo.errors import DuplicateKeyError, AutoReconnect # catch database errors
 from gridfs.errors import NoFile # catch the error tome 2 :D
 from bson.errors import InvalidId # catch the error tome 3 ;)
-from bson import ObjectId # this is the ID of the classic database, in mongodb it is called ObjectId, and it will be used to reference data to gridfs
 import user_agents # this library to get the client's user agent (browser) version
 #from os import path # uncomment this is you want not to use GridFS but the normal OS file system, check this for more informations http://en.wikipedia.org/wiki/Comparison_of_file_systems#Limits 
 import passlib.hash # this is the library used to hash passwords, if you want BCrypt or SCrypt you must install them separately, and it will be chance that will not install on windows :(
 from PIL import Image # library to be used with image files.
 import StringIO # the image uploaded is a stream, use this to read it, then PIL to manipulate it
 #import imghdr # uncomment this if you want only read the header of the image without needing to manipulate the picture.
-from gridfs import GridFS # this is mongodb file storage system, mongodb documents have 16 mega limits, so this is why you should use gridfs to store images.
 from bson import json_util, ObjectId # using python json will not manipulate ObjectId.  
-import os, time, datetime, string, random, re # various python libraries needed.
+import time, datetime, string, random, re # various python libraries needed.
 import amazon.api as amazon # amazon api to use amazon price compare system
 #from apiclient.discovery import build # uncomment this if you want to use google shopping instead of amazon
-from latlong import validatorE, validatorP, villes, egal # import functions from an external file
+from latlong import validatorE, validatorP, villes # import functions from an external file
 import simpleencode # library to use a string to encode another string
-from maill import send_email # sadly this is using smtp which is blocking, only for test
+#from maill import send_email # sadly this is using smtp which is blocking, only for test, uncomment to try it
 
 
 
-db = motor.MotorClient().open_sync().essog #initialize the connection to the mongodb
+
+db = motor.MotorClient().essog #initialize the connection to the mongodb modif
 
 hashh = passlib.hash.pbkdf2_sha512 # pbkdf2 is the one that worked here on windows, BCrypt and SCrypt uses C extension to speed up operation, which dident build on my pc, you can try them on your linux box, it will work
 
@@ -51,11 +50,15 @@ class MainHandler(tornado.web.RequestHandler):
             else:
                 self.redirect("/brow")
     
+class ErrorHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write('<h1>oops, something went bad, please wait for out futurist robots to fix that ^_^</h1>')
+
 # this class will be be inherited by all other classes, this will get the cookie, and remove the slash if added where unnecessary
 class BaseHandler(tornado.web.RequestHandler):
     @tornado.web.removeslash
     def get_current_user(self):
-         return self.get_secure_cookie("mechtari")
+        return self.get_secure_cookie("mechtari")
 
 # the login page
 class LoginHandler(BaseHandler):
@@ -152,10 +155,11 @@ class Statut(tornado.web.RequestHandler):
 
 # the registration form
 class Registration(BaseHandler):
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
-        fs = yield motor.Op(motor.MotorGridFS(db).open)
+        print db
+        fs = yield motor.MotorGridFS(db)
+        print fs
         pseudo = self.get_argument("pseudo").lower()
         pass1 = self.get_argument("pass1")
         pass2 = self.get_argument("pass2")

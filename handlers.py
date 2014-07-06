@@ -62,13 +62,12 @@ class BaseHandler(tornado.web.RequestHandler):
 
 # the login page
 class LoginHandler(BaseHandler):
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self): # dont be dumb and use get to show the password in the url!
         email = self.get_argument("email") # this will seek in the form where there is name="email" and this is how tornado will get the user data
         password = self.get_argument("pass1")
         try:    
-            dbmail = yield motor.Op(db.users.find_one, {"_id": email})
+            dbmail = yield db.users.find_one({"_id": email})
             if dbmail:
                 pas = dbmail["prs"]["pass"]
                 if hashh.verify(password, pas) == True :
@@ -105,8 +104,7 @@ class LoginHandler(BaseHandler):
 # this is the welcome page
 class Profil(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)# todo, use html5 localstorage because the cookie it too big, i used it to free the database calls, but sadly this will be sent for every http message
@@ -118,8 +116,8 @@ class Profil(BaseHandler):
         orientation = info["avt"]["ori"]
         avat = info["avt"]["avt"]
         try:
-            fs = yield motor.Op( motor.MotorGridFS(db).open) # initialise gridfs connection
-            owner = yield motor.Op(db.users.find_one, {"_id":email})
+            fs = motor.MotorGridFS(db) # initialise gridfs connection
+            owner = yield db.users.find_one({"_id":email})
             try:
                 achats = len(owner["pdn"])
             except KeyError:
@@ -128,7 +126,7 @@ class Profil(BaseHandler):
                 ventes = len(owner["pup"])
             except KeyError:
                 ventes = 0
-            gridout = yield motor.Op(fs.get, avat)
+            gridout = yield fs.get(avat)
             avatar = gridout.filename # motor.web.GridFSHandler handles the mime types, so you have not to worry about it :)
             statut = info["prs"]["stt"]
             if statut == "entreprise" :
@@ -157,9 +155,7 @@ class Statut(tornado.web.RequestHandler):
 class Registration(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
-        print db
-        fs = yield motor.MotorGridFS(db)
-        print fs
+        fs = motor.MotorGridFS(db)
         pseudo = self.get_argument("pseudo").lower()
         pass1 = self.get_argument("pass1")
         pass2 = self.get_argument("pass2")
@@ -213,7 +209,7 @@ class Registration(BaseHandler):
             except (IOError, TypeError):
                 self.write("<h1>Veuillez utiliser un fichier image valide</h1>")
             
-            imid = yield motor.Op(fs.put, avat, content_type=avctype, filename = nomfich) # gridfs id
+            imid = yield fs.put(avat, content_type=avctype, filename = nomfich) # gridfs id
             statut = self.get_argument("statut")
             if statut == "entreprise":
                 telf = self.get_argument("telf")
@@ -239,7 +235,7 @@ class Registration(BaseHandler):
                             }    
                             }
                     try:
-                        yield motor.Op(db.users.insert, user)
+                        yield db.users.insert(user)
                         self.redirect("/#login")
                     except DuplicateKeyError: # if the user already exists
                         self.write("<h1>Utilisateur deja existant!</h1>")
@@ -280,7 +276,7 @@ class Registration(BaseHandler):
                             }    
                             }
                     try:
-                        yield motor.Op(db.users.insert, user)
+                        yield db.users.insert(user)
                         self.redirect("/#login")
                     except DuplicateKeyError:
                             self.redirect("/passloss")
@@ -290,8 +286,7 @@ class Registration(BaseHandler):
 # sell handler
 class Vendre(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)
@@ -299,18 +294,19 @@ class Vendre(BaseHandler):
         namep = self.get_argument("namep").lower()
         description = self.get_argument("description")[:160].lower()
         tags = [ tag.lower() for tag in self.get_arguments("tags")]
+        print (namep, description, tags)
         #tag = [x.strip('\\\"\',!*&^%#$;:+') for x in set(tags.split())] this will cut  a sentence to words, uncomment it if you want to use it
         if "" in (namep,description, tags):
             self.redirect("/pirate")
         else:
             try:
-                fs = yield motor.Op(motor.MotorGridFS(db).open)
+                fs = motor.MotorGridFS(db)
                 prix = int(self.get_argument("prix")) # html uses strings, so dont forget to convert what you need, here we need integer
                 echange = self.get_argument("echange")
                 if echange not in ["non", "oui"]:
                     self.redirect("/pirate")
                 etat = self.get_argument("etat")
-                if etat not in ["Sous-Emballage", "Bon État", "Acceptable"]:
+                if etat not in ["se", "be", "ac"]:
                     self.redirect("/pirate")
                 date = datetime.datetime.now()
                 
@@ -327,7 +323,7 @@ class Vendre(BaseHandler):
                 pref = str(time.time())
                 nomfich = pref.replace(".", "") + "-" + ava["filename"]
                 try:
-                    yield motor.Op(db.users.update, {"_id": email},{"$push":{
+                    yield db.users.update({"_id": email},{"$push":{
                                                             "pup":{
                                                                  "spec":{
                                                                          "np":namep, 
@@ -340,7 +336,7 @@ class Vendre(BaseHandler):
                                                                          "own":simpleencode.b64encode(email),
                                                                          },
                                                                  "avt":{
-                                                                           "fto":(yield motor.Op(fs.put, avat, content_type=avctype, filename = nomfich)), 
+                                                                           "fto":(yield fs.put(avat, content_type=avctype, filename = nomfich)), 
                                                                            "ori":orientation,
                                                                            }
                                                                  }
@@ -362,8 +358,7 @@ class Vendre(BaseHandler):
 # product search
 class Search(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         debut = time.time()
         user = self.get_secure_cookie("mechtari")
@@ -418,36 +413,36 @@ class Search(BaseHandler):
             perim = float(perim)/6371 # transform meters to get radians http://stackoverflow.com/questions/17415192/how-to-use-geowithin-in-mongodb
        
         try:          
-            pseud = yield motor.Op(db.users.find({"prs.pseu":pseudo}).distinct, "pup")
+            pseud = yield db.users.find({"prs.pseu":pseudo}).distinct("pup")
             resultpseudo = len(pseud)
             
-            telp = yield motor.Op(db.users.find({"prs.tel":tel}).distinct, "pup")
+            telp = yield db.users.find({"prs.tel":tel}).distinct("pup")
             resultel = len(telp)
                         
             # without aggregation, you will get the root documents and not the sub documents
             
-            resultnomp = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"pup.spec.np":nomp}}, {"$group":{"_id":"sum","pup":{"$sum":1}}}]) # specify and element using a $ for example $_id to group using _id
+            resultnomp = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.spec.np":nomp}}, {"$group":{"_id":"sum","pup":{"$sum":1}}}]) # specify and element using a $ for example $_id to group using _id
             if resultnomp["result"]:
                 total0 = resultnomp["result"][0]["pup"]
             else:
                 total0 = 0
             
-            resultdescription = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"pup.spec.tag":{"$in":description}}}, {"$group":{"_id":"sum","pup":{"$sum":1}}}])
+            resultdescription = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.spec.tag":{"$in":description}}}, {"$group":{"_id":"sum","pup":{"$sum":1}}}])
             if resultdescription["result"]:
                 total1 = resultdescription["result"][0]["pup"]
             else:
                 total1 = 0
             
-            resultsomme = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"pup.spec.pri":{"$gte": sommemin, "$lte": sommemax}}}, {"$group":{"_id":"sum","pup":{"$sum":1}}}]) 
+            resultsomme = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.spec.pri":{"$gte": sommemin, "$lte": sommemax}}}, {"$group":{"_id":"sum","pup":{"$sum":1}}}]) 
             if resultsomme["result"]:
                 total2 = resultsomme["result"][0]["pup"]
             else:
                 total2 = 0
             
-            commun = yield motor.Op(db.users.find({"adr.com":commune}).distinct, "pup")
+            commun = yield db.users.find({"adr.com":commune}).distinct("pup")
             resultcommune =  len(commun)
 
-            per = yield motor.Op(db.users.find({"adr.cor":{"$geoWithin":{"$center":[center, perim]}}}).distinct, "pup")
+            per = yield db.users.find({"adr.cor":{"$geoWithin":{"$center":[center, perim]}}}).distinct("pup")
 
             resultperim = len(per)
             
@@ -459,8 +454,7 @@ class Search(BaseHandler):
 #seach by pseudo
 class SearchePseudo(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         pseudo = self.get_argument("pseudo")
         s = int(self.get_argument("s"))
@@ -471,21 +465,21 @@ class SearchePseudo(BaseHandler):
         info = json_util.loads(user)
         email = info["_id"]
         try:
-            fs = yield motor.Op(motor.MotorGridFS(db).open)
-            up = yield motor.Op(db.users.find_one, {"_id":email})
+            fs = motor.MotorGridFS(db)
+            up = yield db.users.find_one({"_id":email})
             achat = [] 
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
             except KeyError:
                 achat = []    
-            produits = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"prs.pseu":pseudo}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}, {"$project" : {"_id":0, "pup":1}}]) # "$key" to group by key
+            produits = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"prs.pseu":pseudo}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}, {"$project" : {"_id":0, "pup":1}}]) # "$key" to group by key
             avatar = []
             produit = produits["result"]
             if produit:
                 for prod in produit:
                     for i in prod["pup"]:
-                        gridout = yield motor.Op(fs.get, i["avt"]["fto"])
+                        gridout = yield fs.get(i["avt"]["fto"])
                         name = avatar.append(gridout.filename) 
                 produits = prod["pup"]
             else:
@@ -498,8 +492,7 @@ class SearchePseudo(BaseHandler):
 #seach by telephone number
 class SearchTel(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         tel = self.get_argument("tel")
         s = int(self.get_argument("s"))
@@ -510,21 +503,21 @@ class SearchTel(BaseHandler):
         info = json_util.loads(user)
         email = info["_id"]
         try:
-            fs = yield motor.Op(motor.MotorGridFS(db).open)
-            up = yield motor.Op(db.users.find_one, {"_id":email})
+            fs = motor.MotorGridFS(db)
+            up = yield db.users.find_one({"_id":email})
             achat = [] 
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
             except KeyError:
                 achat = []
-            produits = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"prs.tel":tel}},{"$skip":s}, {"$limit":5},{"$group":{"_id":0,"pup":{"$push":"$pup"}}}, {"$project" : {"_id":0, "pup":1}}])
+            produits = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"prs.tel":tel}},{"$skip":s}, {"$limit":5},{"$group":{"_id":0,"pup":{"$push":"$pup"}}}, {"$project" : {"_id":0, "pup":1}}])
             avatar = []
             produit = produits["result"]
             if produit:
                 for prod in produit:
                     for i in prod["pup"]:
-                        gridout = yield motor.Op(fs.get, i["avt"]["fto"])
+                        gridout = yield fs.get(i["avt"]["fto"])
                         name = avatar.append(gridout.filename) 
                 produits = prod["pup"]
             else:
@@ -537,8 +530,7 @@ class SearchTel(BaseHandler):
 #seach by product name
 class SearchNom(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         nomp = self.get_argument("nomp")
         s = int(self.get_argument("s"))
@@ -549,21 +541,21 @@ class SearchNom(BaseHandler):
         info = json_util.loads(user)
         email = info["_id"]
         try:
-            fs = yield motor.Op(motor.MotorGridFS(db).open)
-            up = yield motor.Op(db.users.find_one, {"_id":email})
+            fs = motor.MotorGridFS(db)
+            up = yield db.users.find_one({"_id":email})
             achat = [] 
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
             except KeyError:
                 achat = []
-            produits = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"pup.spec.np":nomp}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}, {"$project" : {"_id":0, "pup":1}}])
+            produits = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.spec.np":nomp}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}, {"$project" : {"_id":0, "pup":1}}])
             avatar = []
             produit = produits["result"]
             if produit:
                 for prod in produit:
                     for i in prod["pup"]:
-                        gridout = yield motor.Op(fs.get, i["avt"]["fto"])
+                        gridout = yield fs.get(i["avt"]["fto"])
                         name = avatar.append(gridout.filename) 
                 produits = prod["pup"]
             else:
@@ -576,8 +568,7 @@ class SearchNom(BaseHandler):
 #seach by tags
 class SearchDescr(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         descr = self.get_argument("description")
         s = int(self.get_argument("s"))
@@ -588,21 +579,21 @@ class SearchDescr(BaseHandler):
         info = json_util.loads(user)
         email = info["_id"]
         try:
-            fs = yield motor.Op(motor.MotorGridFS(db).open)
-            up = yield motor.Op(db.users.find_one, {"_id":email})
+            fs = motor.MotorGridFS(db)
+            up = yield db.users.find_one({"_id":email})
             achat = [] 
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
             except KeyError:
                 achat = []
-            produits = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"pup.spec.tag":{"$in":[descr]}}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}])
+            produits = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.spec.tag":{"$in":[descr]}}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}])
             produit = produits["result"]
             avatar = []
             if produit:
                 for prod in produit:
                     for i in prod["pup"]:
-                        gridout = yield motor.Op(fs.get, i["avt"]["fto"])
+                        gridout = yield fs.get(i["avt"]["fto"])
                         name = avatar.append(gridout.filename) 
                 produits = prod["pup"]
             else:
@@ -615,8 +606,7 @@ class SearchDescr(BaseHandler):
 #seach by price ascending
 class SearchPrixCr(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         smin = int(self.get_argument("sommemin"))
         smax = int(self.get_argument("sommemax"))
@@ -628,21 +618,21 @@ class SearchPrixCr(BaseHandler):
         info = json_util.loads(user)
         email = info["_id"]
         try:
-            fs = yield motor.Op(motor.MotorGridFS(db).open)
-            up = yield motor.Op(db.users.find_one, {"_id":email})
+            fs = motor.MotorGridFS(db)
+            up = yield db.users.find_one({"_id":email})
             achat = [] 
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
             except KeyError:
                 achat = []
-            produits = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"pup.spec.pri":{"$gte": smin, "$lte": smax}}},{"$sort":{"pup.spec.pri":1}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}])
+            produits = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.spec.pri":{"$gte": smin, "$lte": smax}}},{"$sort":{"pup.spec.pri":1}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}])
             avatar = []
             produit = produits["result"]
             if produit:
                 for prod in produit:
                     for i in prod["pup"]:
-                        gridout = yield motor.Op(fs.get, i["avt"]["fto"])
+                        gridout = yield fs.get(i["avt"]["fto"])
                         name = avatar.append(gridout.filename) 
                 produits = prod["pup"]
             else:
@@ -655,8 +645,7 @@ class SearchPrixCr(BaseHandler):
 #seach by price, descending
 class SearchPrixDec(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         smin = int(self.get_argument("sommemin"))
         smax = int(self.get_argument("sommemax"))
@@ -668,21 +657,21 @@ class SearchPrixDec(BaseHandler):
         info = json_util.loads(user)
         email = info["_id"]
         try:
-            fs = yield motor.Op(motor.MotorGridFS(db).open)
-            up = yield motor.Op(db.users.find_one, {"_id":email})
+            fs = motor.MotorGridFS(db)
+            up = yield db.users.find_one({"_id":email})
             achat = [] 
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
             except KeyError:
                 achat = []
-            produits = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"pup.spec.pri":{"$gte": smin, "$lte": smax}}}, {"$sort":{"pup.spec.pri":-1}}, {"$skip":s}, {"$limit":5}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}])
+            produits = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.spec.pri":{"$gte": smin, "$lte": smax}}}, {"$sort":{"pup.spec.pri":-1}}, {"$skip":s}, {"$limit":5}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}])
             avatar = []
             produit = produits["result"]
             if produit:
                 for prod in produit:
                     for i in prod["pup"]:
-                        gridout = yield motor.Op(fs.get, i["avt"]["fto"])
+                        gridout = yield fs.get(i["avt"]["fto"])
                         name = avatar.append(gridout.filename) 
                 produits = prod["pup"]
             else:
@@ -695,8 +684,7 @@ class SearchPrixDec(BaseHandler):
 #seach by city
 class SearchBled(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         com = self.get_argument("commune")
         s = int(self.get_argument("s"))
@@ -707,21 +695,21 @@ class SearchBled(BaseHandler):
         info = json_util.loads(user)
         email = info["_id"]
         try:
-            fs = yield motor.Op(motor.MotorGridFS(db).open)
-            up = yield motor.Op(db.users.find_one, {"_id":email})
+            fs = motor.MotorGridFS(db)
+            up = yield db.users.find_one({"_id":email})
             achat = [] 
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
             except KeyError:
                 achat = []
-            produits = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"adr.com":com}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":"$pup.spec.id","pup":{"$push":"$pup"}}}])
+            produits = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"adr.com":com}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":"$pup.spec.id","pup":{"$push":"$pup"}}}])
             avatar = []
             produit = produits["result"]
             if produit:
                 for prod in produit:
                     for i in prod["pup"]:
-                        gridout = yield motor.Op(fs.get, i["avt"]["fto"])
+                        gridout = yield fs.get(i["avt"]["fto"])
                         name = avatar.append(gridout.filename) 
                 produits = prod["pup"]
             else:
@@ -734,8 +722,7 @@ class SearchBled(BaseHandler):
 #seach by perimeter
 class SearchCoord(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         perim = float(self.get_argument("perim"))/6371
         s = int(self.get_argument("s"))
@@ -747,21 +734,21 @@ class SearchCoord(BaseHandler):
         email = info["_id"]
         center = info["adr"]["cor"]
         try:
-            fs = yield motor.Op(motor.MotorGridFS(db).open)
-            up = yield motor.Op(db.users.find_one, {"_id":email})
+            fs = motor.MotorGridFS(db)
+            up = yield db.users.find_one({"_id":email})
             achat = [] 
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
             except KeyError:
                 achat = []
-            produits = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"adr.cor":{"$within":{"$center":[center, perim]}}}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":"$pup.spec.id","pup":{"$push":"$pup"}}}])
+            produits = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"adr.cor":{"$within":{"$center":[center, perim]}}}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":"$pup.spec.id","pup":{"$push":"$pup"}}}])
             avatar = []
             produit = produits["result"]
             if produit:
                 for prod in produit:
                     for i in prod["pup"]:
-                        gridout = yield motor.Op(fs.get, i["avt"]["fto"])
+                        gridout = yield fs.get(i["avt"]["fto"])
                         name = avatar.append(gridout.filename) 
                 produits = prod["pup"]
             else:
@@ -774,17 +761,16 @@ class SearchCoord(BaseHandler):
 #add to cart
 class Acheter(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)
         email = info["_id"]
         prod = self.get_argument("prod")
         try:
-            pup = yield motor.Op(db.users.find_one, {"pup.avt.fto":ObjectId('{0}'.format(prod))}, {"pup.avt.fto.$":1})
-            yield motor.Op(db.users.update, {"_id":email}, {"$push":{"pdn":pup["pup"][0]}})
-            yield motor.Op(db.users.update,{"pup.avt.fto":ObjectId('{0}'.format(prod))}, {"$addToSet":{"pup.$.cln":email}})
+            pup = yield db.users.find_one({"pup.avt.fto":ObjectId('{0}'.format(prod))}, {"pup.avt.fto.$":1})
+            yield db.users.update({"_id":email}, {"$push":{"pdn":pup["pup"][0]}})
+            yield db.users.update({"pup.avt.fto":ObjectId('{0}'.format(prod))}, {"$addToSet":{"pup.$.cln":email}})
             self.render("uploaded.html", op="achat")
         except AutoReconnect:
             self.redirect("/error")
@@ -792,39 +778,37 @@ class Acheter(BaseHandler):
 #report a bad product
 class Report(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)
         email = info["_id"]
         no = self.get_argument("prod")
         nom = simpleencode.decode(str(no), email[5::-1])   
-        yield motor.Op(db.users.update, {"pup.avt.fto":ObjectId('{0}'.format(nom))},{"$addToSet":{"pup.$.abu":email}})
+        yield db.users.update({"pup.avt.fto":ObjectId('{0}'.format(nom))},{"$addToSet":{"pup.$.abu":email}})
         abus = db.users.find({"pup.avt.fto":ObjectId('{0}'.format(nom))}, {"abus":1})
-        nabus = yield motor.Op(abus.count)
-        yield motor.Op(db.users.update, {"pup.avt.fto":ObjectId('{0}'.format(nom))},{"$set":{"pup.$.nab":nabus}})
+        nabus = yield abus.count
+        yield db.users.update({"pup.avt.fto":ObjectId('{0}'.format(nom))},{"$set":{"pup.$.nab":nabus}})
         self.render("uploaded.html", op="report")
        
 #my uploads
 class MesVentes(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)
         email = info["_id"]
         try:
-            fs = yield motor.Op(motor.MotorGridFS(db).open)
-            produits = yield motor.Op(db.users.find_one, {"_id":email}, {"pup":1})
+            fs = motor.MotorGridFS(db)
+            produits = yield db.users.find_one({"_id":email}, {"pup":1})
             avatar = []
             nbr = 0
             try:
                 produit = produits["pup"]
                 nbr = len(produit)
                 for pro in produit:
-                    gridout = yield motor.Op(fs.get, pro["avt"]["fto"])
+                    gridout = yield fs.get(pro["avt"]["fto"])
                     name = avatar.append(gridout.filename)
             except (KeyError, TypeError):
                 produit = []
@@ -835,15 +819,14 @@ class MesVentes(BaseHandler):
 #my cart
 class MesAchats(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)
         email = info["_id"]
         try:
-            fs = yield motor.Op(motor.MotorGridFS(db).open)
-            produits = yield motor.Op(db.users.find_one, {"_id":email}, {"pdn":1})
+            fs = motor.MotorGridFS(db)
+            produits = yield db.users.find_one({"_id":email}, {"pdn":1})
             achat = [] 
             try:
                 for i in produits["pdn"]:
@@ -856,7 +839,7 @@ class MesAchats(BaseHandler):
                 produit = produits["pdn"]
                 nbr = len(produit)
                 for pro in produit:
-                    gridout = yield motor.Op(fs.get, pro["avt"]["fto"])
+                    gridout = yield fs.get(pro["avt"]["fto"])
                     name = avatar.append(gridout.filename)
             except (KeyError, TypeError, IndexError):
                 produit = []
@@ -866,7 +849,7 @@ class MesAchats(BaseHandler):
                 id = catcher.findall(str(e))[0].strip("(,)'")
                 '''
                 id = str(e)[-25:-3] # since the error is always the same, unless the driver change how alert users ;)
-                yield motor.Op(db.users.update, {"pdn.avt.fto":ObjectId('{0}'.format(id))},{"$pull":{"pdn":{"avt.fto":ObjectId('{0}'.format(id))}}})
+                yield db.users.update({"pdn.avt.fto":ObjectId('{0}'.format(id))},{"$pull":{"pdn":{"avt.fto":ObjectId('{0}'.format(id))}}})
             self.render("ventes.html", achat=achat, email=email, produits=produit,  avatar=avatar, op="achat", npages=0, lin="", link="", replace="", s=0 )
         except (AutoReconnect):
             self.redirect("/error")
@@ -877,8 +860,7 @@ the tip is to delete gridFS entry, so we will not get deleted products and its d
 '''
 class Supprimer(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)
@@ -886,9 +868,9 @@ class Supprimer(BaseHandler):
         prod = self.get_argument("supprime") # toujours se souvenir; HTTP travail avec des caracteres donc il faut penser a faire des operation pour extraire la donnee
         produ = simpleencode.decode(str(prod), email[5::-1])
         try:
-            fs = yield motor.Op(motor.MotorGridFS(db).open)
-            yield motor.Op(db.users.update, {"pup.avt.fto":ObjectId('{0}'.format(produ))},{"$pull":{"pup":{"avt.fto":ObjectId('{0}'.format(produ))}}})
-            yield motor.Op(fs.delete, ObjectId("{0}".format(produ)))
+            fs = motor.MotorGridFS(db)
+            yield db.users.update({"pup.avt.fto":ObjectId('{0}'.format(produ))},{"$pull":{"pup":{"avt.fto":ObjectId('{0}'.format(produ))}}})
+            yield fs.delete(ObjectId("{0}".format(produ)))
             self.redirect("/ventes")
         except InvalidId:
             self.redirect("pirate")
@@ -898,8 +880,7 @@ class Supprimer(BaseHandler):
 # delete from cart, of course, the product is not deleted from database, it is something like Unlike ;)
 class Enlever(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         user = self.get_secure_cookie("mechtari")
         link = self.request.uri
@@ -907,7 +888,7 @@ class Enlever(BaseHandler):
         email = info["_id"]
         prod = self.get_argument("enleve")
         try:
-            yield motor.Op(db.users.update, {"_id":email},{"$pull":{"pdn":{"avt.fto":ObjectId("{0}".format(prod))}}})
+            yield db.users.update({"_id":email},{"$pull":{"pdn":{"avt.fto":ObjectId("{0}".format(prod))}}})
             self.redirect("/achats")
         except (AutoReconnect):
             self.redirect("/error")
@@ -915,24 +896,23 @@ class Enlever(BaseHandler):
 # product page
 class Produit(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self, id):
         id = self.get_argument("id")
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)
         email = info["_id"]
         try:
-            fs = yield motor.Op(motor.MotorGridFS(db).open)
-            parr = yield motor.Op(db.users.find_one, {"pup.avt.fto":ObjectId("{0}".format(id))}, {"adr":1, "avt":1, "prs":1, "pup":{"$elemMatch":{"avt.fto":ObjectId("{0}".format(id))}}})
-            up = yield motor.Op(db.users.find_one, {"_id":email})
-            yield motor.Op(db.users.update,{"pup.avt.fto":ObjectId('{0}'.format(id))}, {"$addToSet":{"pup.$.viz":email}})
+            fs = motor.MotorGridFS(db)
+            parr = yield db.users.find_one({"pup.avt.fto":ObjectId("{0}".format(id))}, {"adr":1, "avt":1, "prs":1, "pup":{"$elemMatch":{"avt.fto":ObjectId("{0}".format(id))}}})
+            up = yield db.users.find_one({"_id":email})
+            yield db.users.update({"pup.avt.fto":ObjectId('{0}'.format(id))}, {"$addToSet":{"pup.$.viz":email}})
             
             avat = []
             try:
                 cmnt = parr["pup"][0]["cmn"] # this one for the comments avatar pictures
                 for pic in cmnt:
-                    gridout = yield motor.Op(fs.get, pic["fto"])
+                    gridout = yield fs.get(pic["fto"])
                     name = avat.append(gridout.filename)
             except (KeyError, TypeError):
                 cmnt = []
@@ -948,8 +928,8 @@ class Produit(BaseHandler):
             except (KeyError, TypeError):
                 exist = 0
             # another technique
-            #parr = yield motor.Op(db.users.find_one, {"pup.avt.fto":ObjectId("{0}".format(id))}, {"adr":1, "avt":1, "prs":1, "pup.spec.$.id":1})
-            gridout = yield motor.Op(fs.get, parr["pup"][0]["avt"]["fto"])
+            #parr = yield db.users.find_one({"pup.avt.fto":ObjectId("{0}".format(id))}, {"adr":1, "avt":1, "prs":1, "pup.spec.$.id":1})
+            gridout = yield fs.get(parr["pup"][0]["avt"]["fto"])
             avatar = gridout.filename
             self.render("produit.html", parr=parr, avatar=avatar, email=email, exist=exist, avat=avat)
         except (AutoReconnect):
@@ -958,8 +938,7 @@ class Produit(BaseHandler):
 # add a comment
 class Comment(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         user = self.get_secure_cookie("mechtari")
         link = self.request.uri
@@ -968,12 +947,12 @@ class Comment(BaseHandler):
         pseudo = info["prs"]["pseu"]
         avat = info["avt"]["avt"]
         print avat
-        fs = yield motor.Op( motor.MotorGridFS(db).open)
+        fs = motor.MotorGridFS(db)
         cmnt = self.get_argument("description")[:160]
         i = self.get_argument("id")
         id = simpleencode.b64decode(i)[::-1] # dumb technique but it will make him struggle for a moment :p
         tim = int(time.time())
-        yield motor.Op(db.users.update, {"pup.avt.fto": ObjectId("{0}".format(id))},{"$push":{"pup.$.cmn":{"prs":email, "pse":pseudo, "fto":avat, "txt": cmnt, "id":time.strftime("%d.%m.%Y %H:%M:%S", time.localtime(tim))}}})
+        yield db.users.update({"pup.avt.fto": ObjectId("{0}".format(id))},{"$push":{"pup.$.cmn":{"prs":email, "pse":pseudo, "fto":avat, "txt": cmnt, "id":time.strftime("%d.%m.%Y %H:%M:%S", time.localtime(tim))}}})
         self.redirect("/info?id={0}".format(id))
         
 # todo, report bad comment, sadly art this time (mongodb 2.4.4) cant add a field in level 2 of documents
@@ -987,7 +966,7 @@ class BadComment(BaseHandler):
         email = info["_id"]
         code = self.get_argument("id")
         id = simpleencode.b64decode(code)
-        h = yield motor.Op(db.users.update, {"pup.cmn.id":id}, {"$addToSet":{"pup.$.cmn":{"abus":email}}})
+        h = yield db.users.update({"pup.cmn.id":id}, {"$addToSet":{"pup.$.cmn":{"abus":email}}})
         self.render("uploaded.html", op="report")
 
 '''
@@ -1040,18 +1019,17 @@ class Compatible(tornado.web.RequestHandler):
 
 #here we go with pass reset, in case the user forgot his password
 class Rese(BaseHandler):
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         try:
             email = self.get_argument("mail")
             timr = datetime.datetime.now()
             code = "".join(random.choice(string.digits) for i in range(4))
             asci = simpleencode.encode(str(timr), code)
-            pas = yield motor.Op(db.users.find_one, {"_id": email})
+            pas = yield db.users.find_one({"_id": email})
             print pas
             if pas :
-                yield motor.Op(db.users.update, {"_id": email}, {"$push":{"reset":{"timr":asci,"code":code}}})
+                yield db.users.update({"_id": email}, {"$push":{"reset":{"timr":asci,"code":code}}})
                 #send_email(email, asci, code) # uncomment this line if you want to send the complete link to your email box, else, you must get the link from the database and forge it by your self localhost:8000/resetYourCode
                 self.render("reset-ok.html", message = "Veuillez acc&eacute;der &agrave; votre boite aux lettres pour compl&eacute;ter l'op&eacute;ration.<br /><br />Vous devez le faire dans moins de 48 heures.")
             else:
@@ -1060,14 +1038,13 @@ class Rese(BaseHandler):
             self.redirect("/#register")
 
 class Reset(BaseHandler):
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self, uri):
         uri = self.request.uri
         try:
             debut = time.time()
             tim = uri[6:] #remove /reset/ from the uri
-            cod = yield motor.Op(db.users.find_one, ({"reset.timr":tim}))
+            cod = yield db.users.find_one({"reset.timr":tim})
             code = cod["reset"][-1]["code"]
             email = cod["_id"]
             dat = simpleencode.decode(tim, code)
@@ -1084,13 +1061,12 @@ class Reset(BaseHandler):
             self.finish()
 
 class Resett(BaseHandler):
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         pin = self.get_argument("rcode")
         tim = self.get_argument("tim")
         mail = self.get_argument("email")
-        cod = yield motor.Op(db.users.find_one, ({"reset.timr":tim}))
+        cod = yield db.users.find_one({"reset.timr":tim})
         code = cod["reset"][-1]["code"]
         email = cod["_id"]
         if mail == email:
@@ -1099,7 +1075,7 @@ class Resett(BaseHandler):
                 pass2 = self.get_argument("pass2")
                 if pass1 == pass2 > 6: # cool python, essayez 5 == 5 > 3, mais sa marchera pas 5 > 3 == 5 evidemment ;)
                     password = hashh.encrypt(pass1, salt_size = 32, rounds = 5000)
-                    yield motor.Op(db.users.update, {"_id":email}, {"$set":{"prs.pass":password, "prs.dt":datetime.datetime.now(), "reset":[]}, "$inc":{"modif":1}})
+                    yield db.users.update({"_id":email}, {"$set":{"prs.pass":password, "prs.dt":datetime.datetime.now(), "reset":[]}, "$inc":{"modif":1}})
                     self.render("reset-ok.html", message = "Votre mot de passe a &eacute;t&eacute; modifi&eacute; avec succ&egrave;s, cliquez <a href='/#login'>ici</a> pour revenir &agrave; la page d'accueil")
                 else:
                     self.write("pirate")
@@ -1114,15 +1090,13 @@ class Resett(BaseHandler):
 #here the password change (the only thing that the user can change :p )
 class Change(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         self.render("change.html")
 
 class Changer(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         ancien = self.get_argument("ancien")
         pass1 = self.get_argument("pass1")
@@ -1130,12 +1104,12 @@ class Changer(BaseHandler):
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)
         email = info["_id"]
-        dbmail = yield motor.Op(db.users.find_one, {"_id": email})
+        dbmail = yield db.users.find_one({"_id": email})
         pas = dbmail[0]["prs"]["pass"]
         if hashh.verify(ancien, pas) == True :
             if pass1 == pass2 > 6:
                 password = hashh.encrypt(pass1, salt_size = 32, rounds = 5000)
-                yield motor.Op(db.users.update, {"_id":email}, {"$set":{"prs.pass":password}, "$inc":{"modif":1}})
+                yield db.users.update({"_id":email}, {"$set":{"prs.pass":password}, "$inc":{"modif":1}})
                 self.clear_cookie("mechtari")
                 self.render("reset-ok.html", message = "Votre mot de passe a &eacute;t&eacute; modifi&eacute; avec succ&egrave;s, cliquez <a href='/#login'>ici</a> pour revenir &agrave; la page d'accueil")
             else:
@@ -1148,8 +1122,7 @@ class Changer(BaseHandler):
 # discount
 class Rabais(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)
@@ -1159,14 +1132,14 @@ class Rabais(BaseHandler):
         try:
             rid = simpleencode.decode(str(id), email[5::-1]) # simple hack to avoid making soldes for other products ;)
             new = int(float(self.get_argument("new"))) # if you try to use int("new") you get error, then you must first convert it as float
-            emails = yield motor.Op(db.users.find_one, {"pup.avt.fto":ObjectId("{0}".format(rid))}, {"pup.cln":1, "_id":0})
+            emails = yield db.users.find_one({"pup.avt.fto":ObjectId("{0}".format(rid))}, {"pup.cln":1, "_id":0})
             try:
                 mails = emails["pup"][0]["cln"]
-                if (yield motor.Op(db.users.update, {"pup.avt.fto":ObjectId("{0}".format(rid))}, {"$set":{"pup.$.spec.pri":new}})):
-                    yield motor.Op(db.rabais.save, {"_id":rid, "t":datetime.datetime.now(), "mail":email, "vnd":mails}) # sadly, cant use datetime.datetime.now().date as _id, bson cant store dates without time!    
+                if (yield db.users.update({"pup.avt.fto":ObjectId("{0}".format(rid))}, {"$set":{"pup.$.spec.pri":new}})):
+                    yield db.rabais.save({"_id":rid, "t":datetime.datetime.now(), "mail":email, "vnd":mails}) # sadly, cant use datetime.datetime.now().date as _id, bson cant store dates without time!    
             except KeyError:
-                if (yield motor.Op(db.users.update, {"pup.avt.fto":ObjectId("{0}".format(rid))}, {"$set":{"pup.$.spec.pri":new}})):
-                    yield motor.Op(db.rabais.save, {"_id":rid, "t":datetime.datetime.now(), "mail":email, "vnd":[]}) # sadly, cant use datetime.datetime.now().date as _id, bson cant store dates without time!
+                if (yield db.users.update({"pup.avt.fto":ObjectId("{0}".format(rid))}, {"$set":{"pup.$.spec.pri":new}})):
+                    yield db.rabais.save({"_id":rid, "t":datetime.datetime.now(), "mail":email, "vnd":[]}) # sadly, cant use datetime.datetime.now().date as _id, bson cant store dates without time!
                             
             self.render("uploaded.html", op="rabai")
         except InvalidId:
@@ -1175,15 +1148,14 @@ class Rabais(BaseHandler):
 # generate the url that contains all the discounts
 class Urls(BaseHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self, url):
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)
         email = info["_id"]
         pseudo = info["prs"]["pseu"]
         url = self.request.uri[8:]
-        a = yield motor.Op(db.link.find_one, {"_id":url})
+        a = yield db.link.find_one({"_id":url})
         self.render("urls.html", links = a["url"], url=url, pseudo=pseudo)
 
 # here we go with admin handler, will use google openId to connect, for maximum security
@@ -1224,8 +1196,7 @@ class gLogoutHandler(AdminHandler):
 # get all products
 class AllProduits(AdminHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         url = self.request.uri
         lin = spliter.split(url)[0]
@@ -1236,14 +1207,14 @@ class AllProduits(AdminHandler):
         else:
             link = ''
             s = 0
-        fs = yield motor.Op(motor.MotorGridFS(db).open)
-        produits = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{}},{"$skip":s}, {"$limit":10}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}])
+        fs = motor.MotorGridFS(db)
+        produits = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{}},{"$skip":s}, {"$limit":10}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}])
         avatar = []
         produit = produits["result"]
         if produit:
             for prod in produit:
                 for i in prod["pup"]:
-                    gridout = yield motor.Op(fs.get, i["avt"]["fto"])
+                    gridout = yield fs.get(i["avt"]["fto"])
                     name = avatar.append(gridout.filename) 
             produits = prod["pup"]
         else:
@@ -1254,8 +1225,7 @@ class AllProduits(AdminHandler):
 # get outdated product to be cleaned (more than 1 year)
 class Perim(AdminHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         today = datetime.datetime.now()
         year = datetime.timedelta(365)
@@ -1268,14 +1238,14 @@ class Perim(AdminHandler):
         else:
             link = ''
             s = 0
-        fs = yield motor.Op(motor.MotorGridFS(db).open)
-        produits = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"pup.spec.dt":{"$gt":today+year}}},{"$skip":s}, {"$limit":10}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}])
+        fs = motor.MotorGridFS(db)
+        produits = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.spec.dt":{"$gt":today+year}}},{"$skip":s}, {"$limit":10}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}])
         avatar = []
         produit = produits["result"]
         if produit:
             for prod in produit:
                 for i in prod["pup"]:
-                    gridout = yield motor.Op(fs.get, i["avt"]["fto"])
+                    gridout = yield fs.get(i["avt"]["fto"])
                     name = avatar.append(gridout.filename) 
             produits = prod["pup"]
         else:
@@ -1286,8 +1256,7 @@ class Perim(AdminHandler):
 # get reported products
 class AbuProduits(AdminHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         url = self.request.uri
         lin = spliter.split(url)[0]
@@ -1298,14 +1267,14 @@ class AbuProduits(AdminHandler):
         else:
             link = ''
             s = 0
-        fs = yield motor.Op(motor.MotorGridFS(db).open)
-        produits = yield motor.Op(db.users.aggregate, [{"$unwind":"$pup"},{"$match":{"pup.nab":{"$gte":1}}},{"$skip":s}, {"$limit":10}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}])
+        fs = motor.MotorGridFS(db)
+        produits = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.nab":{"$gte":1}}},{"$skip":s}, {"$limit":10}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}])
         avatar = []
         produit = produits["result"]
         if produit:
             for prod in produit:
                 for i in prod["pup"]:
-                    gridout = yield motor.Op(fs.get, i["avt"]["fto"])
+                    gridout = yield fs.get(i["avt"]["fto"])
                     name = avatar.append(gridout.filename) 
             produits = prod["pup"]
         else:
@@ -1316,8 +1285,7 @@ class AbuProduits(AdminHandler):
 # get outdated password to encourage users to rewrite them to be re-hashed with new algorithmes more powerful (Moore law)
 class PassPerim(AdminHandler):
     @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self):
         today = datetime.datetime.now()
         year = datetime.timedelta(365)

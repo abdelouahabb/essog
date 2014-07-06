@@ -22,7 +22,7 @@ How to run it :
 =====
 Of course, you **MUST** have Python installed, windows users, come here:
 
-http://python.org/download/releases/2.7.5/#download
+https://www.python.org/downloads/
 
 and of course, you will not work with MySql or any SQL standard, this NoSql, 
 

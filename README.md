@@ -24,7 +24,7 @@ Of course, you **MUST** have Python installed, windows users, come here:
 
 https://www.python.org/downloads/
 
-and of course, you will not work with MySql or any SQL standard, this NoSql, 
+and of course, you will not work with MySql or any SQL standard, this is NoSql, 
 
 http://www.mongodb.org/downloads
 
@@ -37,7 +37,7 @@ on linux:
 
     sudo python app.py
 
- on windows 
+on windows 
 
 Directly double-clic on **app.py** or **open it with a good editor**  
 
@@ -48,9 +48,9 @@ Go to the url (in your browser) [http://localhost:8000][11]
 
 simple, just look where it is written **Download Zip** or something similar :p
 
-**How  to download the library tou said that i need it!**
+**How  to download the library you said that i need it!**
 
-after doanloading the library, just uncompress it, on linux, **right clic in the directory (blank area) and choose something like Open Terminal Here**.
+after downloading the library, just uncompress it, on linux, **right clic in the directory (blank area) and choose something like Open Terminal Here**.
 
     sudo python setup.py install
 

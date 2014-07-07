@@ -1,0 +1,8 @@
+tornado
+motor
+passlib
+PIL
+simpleencode
+pyyaml
+ua-parser
+user-agents

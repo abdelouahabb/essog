@@ -2,7 +2,6 @@ tornado
 motor
 passlib
 pillow
-simpleencode
 pyyaml
 ua-parser
 user-agents

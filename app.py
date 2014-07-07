@@ -9,7 +9,8 @@ from tornado.options import define, options
 import handlers, os
 from motor.web import GridFSHandler
 
-define("port",default=8000,type=int)
+#trying to make a random port number because Heroku dont like the 8000 number?
+define("port",default=8196,type=int)
 
 urls = [
     (r"/", handlers.MainHandler),

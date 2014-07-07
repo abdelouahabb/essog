@@ -6,3 +6,4 @@ simpleencode
 pyyaml
 ua-parser
 user-agents
+python-amazon-simple-product-api

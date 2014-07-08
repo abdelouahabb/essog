@@ -19,7 +19,7 @@ import amazon.api as amazon # amazon api to use amazon price compare system
 #from apiclient.discovery import build # uncomment this if you want to use google shopping instead of amazon
 from latlong import validatorE, validatorP, villes # import functions from an external file
 import simpleencode # library to use a string to encode another string
-#from maill import send_email # sadly this is using smtp which is blocking, only for test, uncomment to try it
+from maill import send_email # sadly this is using smtp which is blocking, only for test, uncomment to try it
 
 
 #this is only used for mongoHQ, remove the uri from the db to connect by default to your machine,
@@ -1030,7 +1030,7 @@ class Rese(BaseHandler):
             print pas
             if pas :
                 yield db.users.update({"_id": email}, {"$push":{"reset":{"timr":asci,"code":code}}})
-                #send_email(email, asci, code) # uncomment this line if you want to send the complete link to your email box, else, you must get the link from the database and forge it by your self localhost:8000/resetYourCode
+                send_email(email, asci, code) # uncomment this line if you want to send the complete link to your email box, else, you must get the link from the database and forge it by your self localhost:8000/resetYourCode
                 self.render("reset-ok.html", message = "Veuillez acc&eacute;der &agrave; votre boite aux lettres pour compl&eacute;ter l'op&eacute;ration.<br /><br />Vous devez le faire dans moins de 48 heures.")
             else:
                 self.redirect("/#register")

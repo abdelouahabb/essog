@@ -13,7 +13,7 @@ def send_email(client, link, pin):
 	smtpserver.ehlo
 	smtpserver.login(gmail_user, gmail_pwd)
 	header = 'To:' + to + '\n' + 'From: ' + gmail_user + '\n' + 'Subject:Recuperation du mot de passe \n'
-	msg = header + '\n Veuillez cliquer sur le lien http://soog.cloudcontrolapp.com/reset/{0} , \nLe code PIN est {1} \n\n'.format(link, pin)
+	msg = header + '\n Veuillez cliquer sur le lien http://soog.cloudcontrolapp.com/reset{0} , \nLe code PIN est {1} \n\n'.format(link, pin)
 	smtpserver.sendmail(gmail_user, to, msg)
 	print 'done!'
 	smtpserver.close()

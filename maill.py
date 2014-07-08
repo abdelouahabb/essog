@@ -5,8 +5,8 @@ this will use your gmail account to send emails, you are limited to http://suppo
 '''
 def send_email(client, link, pin):
 	to = client
-	gmail_user = 'you_gmail@gmail.com'
-	gmail_pwd = 'your password'
+	gmail_user = 'emailerdz@gmail.com'
+	gmail_pwd = 'QwertY1234' #thanks gmail for free accounts ;)
 	smtpserver = smtplib.SMTP("smtp.gmail.com",587)
 	smtpserver.ehlo()
 	smtpserver.starttls()

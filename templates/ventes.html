@@ -4,9 +4,9 @@
 
 {% if produits==[] %}
 {% if op=="vente" %}
-<h1 class="hhh">Vous n'avez aucun produit &agrave; vendre,<br /> Cliquez <a href="http://localhost:8000/profil#vendr">ici</a> pour pouvoir ajouter des produits.</h1>
+<h1 class="hhh">Vous n'avez aucun produit &agrave; vendre,<br /> Cliquez <a href="/profil#vendr">ici</a> pour pouvoir ajouter des produits.</h1>
 {% elif op=="achat" %}
-<h1 class="hhh">Vous n'avez aucun produit ajout&eacute;,<br /> Cliquez <a href="http://localhost:8000/profil#acheter">ici</a> pour pouvoir ajouter des produits.</h1>
+<h1 class="hhh">Vous n'avez aucun produit ajout&eacute;,<br /> Cliquez <a href="/profil#acheter">ici</a> pour pouvoir ajouter des produits.</h1>
 {% elif op=="srch" %}
 <h1 class="hhh">Il n y a Pas de r&eacute;sultats &agrave; Afficher</h1>
 {% end %}

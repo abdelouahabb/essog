@@ -14,7 +14,6 @@ define("port",default=8196,type=int)
 
 urls = [
     (r"/", handlers.MainHandler),
-    (r"/brow/*", handlers.Compatible),
     (r"/register", handlers.Statut),
     (r"/nojs/*", handlers.NoJsHandler),
     (r"/profile", handlers.Registration),

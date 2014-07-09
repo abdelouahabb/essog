@@ -8,12 +8,12 @@ from pymongo.errors import DuplicateKeyError, AutoReconnect # catch database err
 from gridfs.errors import NoFile # catch the error tome 2 :D
 from bson.errors import InvalidId # catch the error tome 3 ;)
 import user_agents # this library to get the client's user agent (browser) version
-#from os import path # uncomment this is you want not to use GridFS but the normal OS file system, check this for more informations http://en.wikipedia.org/wiki/Comparison_of_file_systems#Limits 
+#from os import path # uncomment this is you want not to use GridFS but the normal OS file system, check this for more informations http://en.wikipedia.org/wiki/Comparison_of_file_systems#Limits
 import passlib.hash # this is the library used to hash passwords, if you want BCrypt or SCrypt you must install them separately, and it will be chance that will not install on windows :(
 from PIL import Image # library to be used with image files.
 import StringIO # the image uploaded is a stream, use this to read it, then PIL to manipulate it
 #import imghdr # uncomment this if you want only read the header of the image without needing to manipulate the picture.
-from bson import json_util, ObjectId # using python json will not manipulate ObjectId.  
+from bson import json_util, ObjectId # using python json will not manipulate ObjectId.
 import time, datetime, string, random, re # various python libraries needed.
 import amazon.api as amazon # amazon api to use amazon price compare system
 #from apiclient.discovery import build # uncomment this if you want to use google shopping instead of amazon
@@ -32,24 +32,30 @@ hashh = passlib.hash.pbkdf2_sha512 # pbkdf2 is the one that worked here on windo
 spliter = re.compile("\?") # this will be our link splitter ;)
 replace = re.compile("s=\d+") # and this one to replace values in te url
 
-# get your 3 keys using this tutorial http://www.clickonf5.org/6932/amazon-developer-api-secret-access-key/ 
+# get your 3 keys using this tutorial http://www.clickonf5.org/6932/amazon-developer-api-secret-access-key/
 access_key_ID = ""
 secret_key = ""
-Associate_Tag = ""             
+Associate_Tag = ""
 
 #this is used to let only HTML5 browsers use your website
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         a = self.request.headers["User-Agent"]
-        name = user_agents.parse(a).browser.family
-        version = int(user_agents.parse(a).browser.version_string[:2])
-        # example using Chrome, at least version 25 is needed, else you show a page to a user that he must get the latest version
-        if name == "Chrome":
-            if version > 25:
+        #name = user_agents.parse(a).browser.family
+        name = user_agents.parse(a)
+        if name.is_pc:
+            if (name.browser.family == 'Chrome') and (name.browser.version[0]>=30):
+                self.render("acc.html")
+            elif (name.browser.family == 'Firefox') and (name.browser.version[0]>=30):
+                self.render("acc.html")
+            elif (name.browser.family == 'Opera') and (name.browser.version[0]>=12):
                 self.render("acc.html")
             else:
-                self.redirect("/brow")
-    
+                self.render("browser.html")
+        else:
+            self.write('mazal el hal chwyia 3la les portables ^_^')
+        #version = int(user_agents.parse(a).browser.version_string[:2])
+
 class ErrorHandler(tornado.web.RequestHandler):
     def get(self):
         self.write('<h1>oops, something went bad, please wait for out futurist robots to fix that ^_^</h1>')
@@ -66,7 +72,7 @@ class LoginHandler(BaseHandler):
     def post(self): # dont be dumb and use get to show the password in the url!
         email = self.get_argument("email") # this will seek in the form where there is name="email" and this is how tornado will get the user data
         password = self.get_argument("pass1")
-        try:    
+        try:
             dbmail = yield db.users.find_one({"_id": email})
             if dbmail:
                 pas = dbmail["prs"]["pass"]
@@ -100,7 +106,7 @@ class LoginHandler(BaseHandler):
                 self.redirect("/#register")
         except (AutoReconnect):
             self.redirect("/error")
-            
+
 # this is the welcome page
 class Profil(BaseHandler):
     @tornado.web.authenticated
@@ -139,8 +145,8 @@ class Profil(BaseHandler):
                 sexe = info["prs"]["sxe"]
                 self.render("profile.html", achats=achats, ventes=ventes, site=site, statut=statut, pseudo=pseudo, email=email, tel=tel, commune=commune, nom=nom, prenom=prenom, daten=daten, sexe=sexe, avatar=avatar, orientation=orientation)
         except (AutoReconnect):
-                self.redirect("/error")        
-            
+                self.redirect("/error")
+
 # this is used for the registration to get the type of the user, and show him the right form registration
 class Statut(tornado.web.RequestHandler):
     def post(self):
@@ -174,25 +180,25 @@ class Registration(BaseHandler):
                 ava = self.request.files['avatar'][0] # get the picture.
                 avat = ava["body"] # get the picture contents
                 avctype = ava["content_type"] # get the image type
-                
+
                 '''
                 to limit picture size, go to IOStream.py and modify def __init__(self, socket, io_loop=None, max_buffer_size=104857600,read_chunk_size=4096)
-                and replace 104857600 (100 mega) by your value, personaly i put 1 mega (1048576 octets), or you can override this with your own class. 
+                and replace 104857600 (100 mega) by your value, personaly i put 1 mega (1048576 octets), or you can override this with your own class.
                 '''
-                
+
                 image = Image.open(StringIO.StringIO(buf=avat))
                 type = image.format
                 (x, y) = image.size
                 if x < y:
                     orientation = "portrait"
                 else:
-                    orientation = "paysage" 
+                    orientation = "paysage"
                 pref = str(time.time()) #ok, c une astuce bidon mais bon...
                 nomfich = pref.replace(".", "") + "-" + ava["filename"]
                 """
                 # use this if  you want to use filesystem instead of gridfs
                 pat = path.join(path.dirname(__file__), "users")
-                a = "{0}/{1}".format(pat, email)                    
+                a = "{0}/{1}".format(pat, email)
                 if not path.exists(a):
                     #print path.exists("{0}/{1}".format(pat, email))
                     if os.name == "nt":
@@ -208,7 +214,7 @@ class Registration(BaseHandler):
                 """
             except (IOError, TypeError):
                 self.write("<h1>Veuillez utiliser un fichier image valide</h1>")
-            
+
             imid = yield fs.put(avat, content_type=avctype, filename = nomfich) # gridfs id
             statut = self.get_argument("statut")
             if statut == "entreprise":
@@ -217,22 +223,22 @@ class Registration(BaseHandler):
                     self.redirect("/pirate")
                 else:
                     user={"_id":email,
-                        "prs":{ 
+                        "prs":{
                             "dt":datetime.datetime.now(),
-                            "pseu":pseudo, 
-                            "pass":password, 
-                            "tel":tel, 
-                            "tef":telf, 
-                            "stt":statut}, 
+                            "pseu":pseudo,
+                            "pass":password,
+                            "tel":tel,
+                            "tef":telf,
+                            "stt":statut},
                         "avt":{
-                            "ori":orientation, 
+                            "ori":orientation,
                             "avt":imid},
                         "adr":{
-                            "wil":wilaya, 
-                            "com":commune, 
-                            "cor":coord, 
+                            "wil":wilaya,
+                            "com":commune,
+                            "cor":coord,
                             "sit":site
-                            }    
+                            }
                             }
                     try:
                         yield db.users.insert(user)
@@ -254,26 +260,26 @@ class Registration(BaseHandler):
                 if validatorP(email, pseudo, password, tel, pass1, pass2, nom, prenom, daten, sexe):
                     self.redirect("/pirate")
                 else:
-                    user={"_id":email, 
+                    user={"_id":email,
                         "prs":{
-                            "dt":datetime.datetime.now(), 
-                            "pseu":pseudo, 
-                            "pass":password, 
-                            "tel":tel, 
+                            "dt":datetime.datetime.now(),
+                            "pseu":pseudo,
+                            "pass":password,
+                            "tel":tel,
                             "stt":statut,
-                            "nom":nom, 
-                            "prn":prenom, 
-                            "dtn":daten, 
-                            "sxe":sexe}, 
+                            "nom":nom,
+                            "prn":prenom,
+                            "dtn":daten,
+                            "sxe":sexe},
                         "avt":{
-                            "ori":orientation, 
+                            "ori":orientation,
                             "avt":imid},
                         "adr":{
-                            "wil":wilaya, 
-                            "com":commune, 
-                            "cor":coord, 
+                            "wil":wilaya,
+                            "com":commune,
+                            "cor":coord,
                             "sit":site
-                            }    
+                            }
                             }
                     try:
                         yield db.users.insert(user)
@@ -309,7 +315,7 @@ class Vendre(BaseHandler):
                 if etat not in ["se", "be", "ac"]:
                     self.redirect("/pirate")
                 date = datetime.datetime.now()
-                
+
                 ava = self.request.files['photo'][0]
                 avat = ava["body"]
                 avctype = ava["content_type"]
@@ -319,24 +325,24 @@ class Vendre(BaseHandler):
                 if x < y:
                     orientation = "portrait"
                 else:
-                    orientation = "paysage" 
+                    orientation = "paysage"
                 pref = str(time.time())
                 nomfich = pref.replace(".", "") + "-" + ava["filename"]
                 try:
                     yield db.users.update({"_id": email},{"$push":{
                                                             "pup":{
                                                                  "spec":{
-                                                                         "np":namep, 
+                                                                         "np":namep,
                                                                          "pri":prix,
                                                                          "dsp":description,
                                                                          "tag":tags,
                                                                          "dt":date,
                                                                          "eta":etat,
-                                                                         "chng":echange,  
+                                                                         "chng":echange,
                                                                          "own":simpleencode.b64encode(email),
                                                                          },
                                                                  "avt":{
-                                                                           "fto":(yield fs.put(avat, content_type=avctype, filename = nomfich)), 
+                                                                           "fto":(yield fs.put(avat, content_type=avctype, filename = nomfich)),
                                                                            "ori":orientation,
                                                                            }
                                                                  }
@@ -365,7 +371,7 @@ class Search(BaseHandler):
         info = json_util.loads(user)
         email = info["_id"]
         center = info["adr"]["cor"]
-        
+
         pseudo = self.get_argument("pseudo").lower()
         if not pseudo:
             pseudo = ""
@@ -375,22 +381,22 @@ class Search(BaseHandler):
         else:
             if not re.match("0[5-7][5-9][0-9]{7}$", tel): # used algeria gsm system.
                 self.redirect("/pirate")
-            
+
         nomp = self.get_argument("nom").lower()
         if not nomp:
             nomp = ""
         description = [x.strip(',!*&^%#$;:+') for x in self.get_argument("description").lower().split()]
         if not description:
             description = []
-            
+
         sommemax = self.get_argument("sommemax")
         if sommemax:
             sommemax = int(sommemax)
         else:
             sommemax = 0
-        
+
         sommemin = self.get_argument("sommemin")
-        
+
         # if only one field is put, the min or the max.
         if sommemin and sommemax == 0:
             sommemin = int(sommemin)
@@ -400,56 +406,56 @@ class Search(BaseHandler):
             sommemax = sommemax
         elif sommemin == "":
             sommemin = 0
-            
+
         commune = self.get_argument("commune")
         if not commune:
             commune = ""
-        
+
         perim = self.get_argument("perim")
         if not perim:
             center = [0, 0]
             perim = 0
         else:
             perim = float(perim)/6371 # transform meters to get radians http://stackoverflow.com/questions/17415192/how-to-use-geowithin-in-mongodb
-       
-        try:          
+
+        try:
             pseud = yield db.users.find({"prs.pseu":pseudo}).distinct("pup")
             resultpseudo = len(pseud)
-            
+
             telp = yield db.users.find({"prs.tel":tel}).distinct("pup")
             resultel = len(telp)
-                        
+
             # without aggregation, you will get the root documents and not the sub documents
-            
+
             resultnomp = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.spec.np":nomp}}, {"$group":{"_id":"sum","pup":{"$sum":1}}}]) # specify and element using a $ for example $_id to group using _id
             if resultnomp["result"]:
                 total0 = resultnomp["result"][0]["pup"]
             else:
                 total0 = 0
-            
+
             resultdescription = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.spec.tag":{"$in":description}}}, {"$group":{"_id":"sum","pup":{"$sum":1}}}])
             if resultdescription["result"]:
                 total1 = resultdescription["result"][0]["pup"]
             else:
                 total1 = 0
-            
-            resultsomme = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.spec.pri":{"$gte": sommemin, "$lte": sommemax}}}, {"$group":{"_id":"sum","pup":{"$sum":1}}}]) 
+
+            resultsomme = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"pup.spec.pri":{"$gte": sommemin, "$lte": sommemax}}}, {"$group":{"_id":"sum","pup":{"$sum":1}}}])
             if resultsomme["result"]:
                 total2 = resultsomme["result"][0]["pup"]
             else:
                 total2 = 0
-            
+
             commun = yield db.users.find({"adr.com":commune}).distinct("pup")
             resultcommune =  len(commun)
 
             per = yield db.users.find({"adr.cor":{"$geoWithin":{"$center":[center, perim]}}}).distinct("pup")
 
             resultperim = len(per)
-            
+
             self.render("resultats.html",resultpseudo=resultpseudo,resultel=resultel,resultnomp=resultnomp,resultdescription=resultdescription,resultsomme=resultsomme,resultcommune=resultcommune,resultperim=resultperim,
                         pseudo=pseudo,tel=tel,nomp=nomp,description=description,sommemax =sommemax,sommemin=sommemin,commune=commune,perim=perim, total0=total0, total1=total1, total2=total2)
         except (AutoReconnect):
-                self.redirect("/error")    
+                self.redirect("/error")
 
 #seach by pseudo
 class SearchePseudo(BaseHandler):
@@ -467,12 +473,12 @@ class SearchePseudo(BaseHandler):
         try:
             fs = motor.MotorGridFS(db)
             up = yield db.users.find_one({"_id":email})
-            achat = [] 
+            achat = []
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
             except KeyError:
-                achat = []    
+                achat = []
             produits = yield db.users.aggregate([{"$unwind":"$pup"},{"$match":{"prs.pseu":pseudo}},{"$skip":s}, {"$limit":5}, {"$group":{"_id":0,"pup":{"$push":"$pup"}}}, {"$project" : {"_id":0, "pup":1}}]) # "$key" to group by key
             avatar = []
             produit = produits["result"]
@@ -480,7 +486,7 @@ class SearchePseudo(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename) 
+                        name = avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -488,7 +494,7 @@ class SearchePseudo(BaseHandler):
             self.render("ventes.html", produits=produits, avatar=avatar, achat=achat, op="srch", email=email, npages=npages, lin=lin, link=link, replace=replace, s=s )
         except (AutoReconnect):
                 self.redirect("/error")
-        
+
 #seach by telephone number
 class SearchTel(BaseHandler):
     @tornado.web.authenticated
@@ -505,7 +511,7 @@ class SearchTel(BaseHandler):
         try:
             fs = motor.MotorGridFS(db)
             up = yield db.users.find_one({"_id":email})
-            achat = [] 
+            achat = []
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
@@ -518,7 +524,7 @@ class SearchTel(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename) 
+                        name = avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -543,7 +549,7 @@ class SearchNom(BaseHandler):
         try:
             fs = motor.MotorGridFS(db)
             up = yield db.users.find_one({"_id":email})
-            achat = [] 
+            achat = []
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
@@ -556,7 +562,7 @@ class SearchNom(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename) 
+                        name = avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -581,7 +587,7 @@ class SearchDescr(BaseHandler):
         try:
             fs = motor.MotorGridFS(db)
             up = yield db.users.find_one({"_id":email})
-            achat = [] 
+            achat = []
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
@@ -594,7 +600,7 @@ class SearchDescr(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename) 
+                        name = avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -602,7 +608,7 @@ class SearchDescr(BaseHandler):
             self.render("ventes.html", produits=produits, avatar=avatar, achat=achat, op="srch", email=email, npages=npages, lin=lin, link=link, replace=replace, s=s )
         except (AutoReconnect):
                 self.redirect("/error")
-        
+
 #seach by price ascending
 class SearchPrixCr(BaseHandler):
     @tornado.web.authenticated
@@ -620,7 +626,7 @@ class SearchPrixCr(BaseHandler):
         try:
             fs = motor.MotorGridFS(db)
             up = yield db.users.find_one({"_id":email})
-            achat = [] 
+            achat = []
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
@@ -633,7 +639,7 @@ class SearchPrixCr(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename) 
+                        name = avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -659,7 +665,7 @@ class SearchPrixDec(BaseHandler):
         try:
             fs = motor.MotorGridFS(db)
             up = yield db.users.find_one({"_id":email})
-            achat = [] 
+            achat = []
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
@@ -672,7 +678,7 @@ class SearchPrixDec(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename) 
+                        name = avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -697,7 +703,7 @@ class SearchBled(BaseHandler):
         try:
             fs = motor.MotorGridFS(db)
             up = yield db.users.find_one({"_id":email})
-            achat = [] 
+            achat = []
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
@@ -710,7 +716,7 @@ class SearchBled(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename) 
+                        name = avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -736,7 +742,7 @@ class SearchCoord(BaseHandler):
         try:
             fs = motor.MotorGridFS(db)
             up = yield db.users.find_one({"_id":email})
-            achat = [] 
+            achat = []
             try:
                 for i in up["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
@@ -749,7 +755,7 @@ class SearchCoord(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename) 
+                        name = avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -784,13 +790,13 @@ class Report(BaseHandler):
         info = json_util.loads(user)
         email = info["_id"]
         no = self.get_argument("prod")
-        nom = simpleencode.decode(str(no), email[5::-1])   
+        nom = simpleencode.decode(str(no), email[5::-1])
         yield db.users.update({"pup.avt.fto":ObjectId('{0}'.format(nom))},{"$addToSet":{"pup.$.abu":email}})
         abus = db.users.find({"pup.avt.fto":ObjectId('{0}'.format(nom))}, {"abus":1})
         nabus = yield abus.count
         yield db.users.update({"pup.avt.fto":ObjectId('{0}'.format(nom))},{"$set":{"pup.$.nab":nabus}})
         self.render("uploaded.html", op="report")
-       
+
 #my uploads
 class MesVentes(BaseHandler):
     @tornado.web.authenticated
@@ -827,7 +833,7 @@ class MesAchats(BaseHandler):
         try:
             fs = motor.MotorGridFS(db)
             produits = yield db.users.find_one({"_id":email}, {"pdn":1})
-            achat = [] 
+            achat = []
             try:
                 for i in produits["pdn"]:
                     achat.append(str(i["avt"]["fto"]))
@@ -892,7 +898,7 @@ class Enlever(BaseHandler):
             self.redirect("/achats")
         except (AutoReconnect):
             self.redirect("/error")
-            
+
 # product page
 class Produit(BaseHandler):
     @tornado.web.authenticated
@@ -907,7 +913,7 @@ class Produit(BaseHandler):
             parr = yield db.users.find_one({"pup.avt.fto":ObjectId("{0}".format(id))}, {"adr":1, "avt":1, "prs":1, "pup":{"$elemMatch":{"avt.fto":ObjectId("{0}".format(id))}}})
             up = yield db.users.find_one({"_id":email})
             yield db.users.update({"pup.avt.fto":ObjectId('{0}'.format(id))}, {"$addToSet":{"pup.$.viz":email}})
-            
+
             avat = []
             try:
                 cmnt = parr["pup"][0]["cmn"] # this one for the comments avatar pictures
@@ -916,9 +922,9 @@ class Produit(BaseHandler):
                     name = avat.append(gridout.filename)
             except (KeyError, TypeError):
                 cmnt = []
-            
-            achats = [] 
-            try:    
+
+            achats = []
+            try:
                 for i in up["pdn"]:
                     achats.append(str(i["avt"]["fto"]))
                 if id in achats:
@@ -934,7 +940,7 @@ class Produit(BaseHandler):
             self.render("produit.html", parr=parr, avatar=avatar, email=email, exist=exist, avat=avat)
         except (AutoReconnect):
             self.redirect("/error")
-        
+
 # add a comment
 class Comment(BaseHandler):
     @tornado.web.authenticated
@@ -954,7 +960,7 @@ class Comment(BaseHandler):
         tim = int(time.time())
         yield db.users.update({"pup.avt.fto": ObjectId("{0}".format(id))},{"$push":{"pup.$.cmn":{"prs":email, "pse":pseudo, "fto":avat, "txt": cmnt, "id":time.strftime("%d.%m.%Y %H:%M:%S", time.localtime(tim))}}})
         self.redirect("/info?id={0}".format(id))
-        
+
 # todo, report bad comment, sadly art this time (mongodb 2.4.4) cant add a field in level 2 of documents
 class BadComment(BaseHandler):
     @tornado.web.authenticated
@@ -984,7 +990,7 @@ class GCompare(BaseHandler):
             print i
             #print t["items"][i]["product"]["inventories"][0]["price"] # les prix
             #print t["items"][0]["product"]["link"] # les liens
-'''    
+'''
 
 # amazon compare, sadly blocking, hope we will get a non-blocking library
 class ACompare(BaseHandler):
@@ -996,7 +1002,7 @@ class ACompare(BaseHandler):
         for i in res:
             result.append([i.price_and_currency, i.title, i.offer_url, i.medium_image_url])
         self.render("compare.html", result=result)
-        
+
 # logout handler, simply deleted the cookie
 class LogoutHandler(BaseHandler):
     @tornado.web.authenticated
@@ -1012,10 +1018,7 @@ class NoJsHandler(tornado.web.RequestHandler):
 class Pirate(tornado.web.RequestHandler):
     def get(self):
         self.write("<h1>PIRATE!</h1>")
-        
-class Compatible(tornado.web.RequestHandler):
-    def get(self):
-        self.render("browser.html")
+
 
 #here we go with pass reset, in case the user forgot his password
 class Rese(BaseHandler):
@@ -1118,7 +1121,7 @@ class Changer(BaseHandler):
         else:
             self.write("pirate")
             self.finish()
-        
+
 # discount
 class Rabais(BaseHandler):
     @tornado.web.authenticated
@@ -1136,11 +1139,11 @@ class Rabais(BaseHandler):
             try:
                 mails = emails["pup"][0]["cln"]
                 if (yield db.users.update({"pup.avt.fto":ObjectId("{0}".format(rid))}, {"$set":{"pup.$.spec.pri":new}})):
-                    yield db.rabais.save({"_id":rid, "t":datetime.datetime.now(), "mail":email, "vnd":mails}) # sadly, cant use datetime.datetime.now().date as _id, bson cant store dates without time!    
+                    yield db.rabais.save({"_id":rid, "t":datetime.datetime.now(), "mail":email, "vnd":mails}) # sadly, cant use datetime.datetime.now().date as _id, bson cant store dates without time!
             except KeyError:
                 if (yield db.users.update({"pup.avt.fto":ObjectId("{0}".format(rid))}, {"$set":{"pup.$.spec.pri":new}})):
                     yield db.rabais.save({"_id":rid, "t":datetime.datetime.now(), "mail":email, "vnd":[]}) # sadly, cant use datetime.datetime.now().date as _id, bson cant store dates without time!
-                            
+
             self.render("uploaded.html", op="rabai")
         except InvalidId:
             self.redirect("pirate")
@@ -1170,7 +1173,7 @@ class Admin(AdminHandler):
     def get(self):
         # look at the results returned from google ;)
         print self.current_user
-        if tornado.escape.xhtml_escape(self.current_user["email"]) == "your_email@gmail.com": # here you put your email (admin) or all those using gmail will access to your admin page if they got the url ;) 
+        if tornado.escape.xhtml_escape(self.current_user["email"]) == "your_email@gmail.com": # here you put your email (admin) or all those using gmail will access to your admin page if they got the url ;)
             self.redirect("/all")
         else:
             self.write("pirate")
@@ -1191,7 +1194,7 @@ class gAuthHandler(AdminHandler, tornado.auth.GoogleMixin):
 class gLogoutHandler(AdminHandler):
     def get(self):
         self.clear_cookie("alien")
-        self.write('You are now logged out. Click <a href="/galien/login">here</a> to log back in.')   
+        self.write('You are now logged out. Click <a href="/galien/login">here</a> to log back in.')
 
 # get all products
 class AllProduits(AdminHandler):
@@ -1215,7 +1218,7 @@ class AllProduits(AdminHandler):
             for prod in produit:
                 for i in prod["pup"]:
                     gridout = yield fs.get(i["avt"]["fto"])
-                    name = avatar.append(gridout.filename) 
+                    name = avatar.append(gridout.filename)
             produits = prod["pup"]
         else:
             produits = []
@@ -1246,7 +1249,7 @@ class Perim(AdminHandler):
             for prod in produit:
                 for i in prod["pup"]:
                     gridout = yield fs.get(i["avt"]["fto"])
-                    name = avatar.append(gridout.filename) 
+                    name = avatar.append(gridout.filename)
             produits = prod["pup"]
         else:
             produits = []
@@ -1275,7 +1278,7 @@ class AbuProduits(AdminHandler):
             for prod in produit:
                 for i in prod["pup"]:
                     gridout = yield fs.get(i["avt"]["fto"])
-                    name = avatar.append(gridout.filename) 
+                    name = avatar.append(gridout.filename)
             produits = prod["pup"]
         else:
             produits = []

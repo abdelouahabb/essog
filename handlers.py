@@ -21,7 +21,7 @@ from latlong import validatorE, validatorP, villes # import functions from an ex
 import simpleencode # library to use a string to encode another string
 from maill import send_email # sadly this is using smtp which is blocking, only for test, uncomment to try it
 
-
+#let try some hack...
 #this is only used for mongoHQ, remove the uri from the db to connect by default to your machine,
 uri = "mongodb://alien:12345@kahana.mongohq.com:10067/essog"
 db = motor.MotorClient(uri).essog #initialize the connection to the mongodb modif

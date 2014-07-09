@@ -1173,7 +1173,7 @@ class Admin(AdminHandler):
     def get(self):
         # look at the results returned from google ;)
         print self.current_user
-        if tornado.escape.xhtml_escape(self.current_user["email"]) == "your_email@gmail.com": # here you put your email (admin) or all those using gmail will access to your admin page if they got the url ;)
+        if tornado.escape.xhtml_escape(self.current_user["email"]) == "emailerdz@gmail.com": # here you put your email (admin) or all those using gmail will access to your admin page if they got the url ;)
             self.redirect("/all")
         else:
             self.write("pirate")

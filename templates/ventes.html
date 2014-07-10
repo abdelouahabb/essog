@@ -92,7 +92,7 @@
 	
 	<form method="post" action="/rabai" class="supprimer">
 		{% raw xsrf_form_html() %}
-		<input id='{{str(produit["avt"]["fto"])}}a' class="rabai" name="rabai" type="number" placeholder="Votre % du Solde" min="5" max="90" title="Entre 5% et 90%" onkeyup="document.getElementById('{{str(produit["avt"]["fto"])}}b').value = Rabais('{{str(produit["avt"]["fto"])}}a', '{{str(produit["avt"]["fto"])}}'); Solde('{{str(produit["avt"]["fto"])}}c', '{{str(produit["avt"]["fto"])}}b')" onchange="document.getElementById('{{str(produit["avt"]["fto"])}}b').value = Rabais('{{str(produit["avt"]["fto"])}}a', '{{str(produit["avt"]["fto"])}}'); Solde('{{str(produit["avt"]["fto"])}}c', '{{str(produit["avt"]["fto"])}}b')">
+		<input id='{{str(produit["avt"]["fto"])}}a' required class="rabai" name="rabai" type="number" placeholder="Votre % du Solde" min="5" max="90" title="Entre 5% et 90%" onkeyup="document.getElementById('{{str(produit["avt"]["fto"])}}b').value = Rabais('{{str(produit["avt"]["fto"])}}a', '{{str(produit["avt"]["fto"])}}'); Solde('{{str(produit["avt"]["fto"])}}c', '{{str(produit["avt"]["fto"])}}b')" onchange="document.getElementById('{{str(produit["avt"]["fto"])}}b').value = Rabais('{{str(produit["avt"]["fto"])}}a', '{{str(produit["avt"]["fto"])}}'); Solde('{{str(produit["avt"]["fto"])}}c', '{{str(produit["avt"]["fto"])}}b')">
 		<input type="hidden" name="new" id='{{str(produit["avt"]["fto"])}}b' onchange="Rabai('{{str(produit["avt"]["fto"])}}c', '{{str(produit["avt"]["fto"])}}b')" value='{{produit["spec"]["pri"]}}' />
 		<input type="hidden" name="id" value="{{encode(str(produit["avt"]["fto"]), email[5::-1])}}" />
 		<h3 id='{{str(produit["avt"]["fto"])}}c'>&nbsp;</h3>

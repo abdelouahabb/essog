@@ -23,7 +23,7 @@ from maill import send_email # sadly this is using smtp which is blocking, only 
 
 #let try some hack...
 #this is only used for mongoHQ, remove the uri from the db to connect by default to your machine,
-uri = "mongodb://alien:12345@kahana.mongohq.com:10067/essog"
+uri = "mongodb://$A:$B@kahana.mongohq.com:10067/essog"
 db = motor.MotorClient(uri).essog #initialize the connection to the mongodb modif
 
 hashh = passlib.hash.pbkdf2_sha512 # pbkdf2 is the one that worked here on windows, BCrypt and SCrypt uses C extension to speed up operation, which dident build on my pc, you can try them on your linux box, it will work

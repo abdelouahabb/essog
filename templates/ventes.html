@@ -20,7 +20,15 @@
 	<span class="nom"><div class="tit">Le Nom du Produit:</div> {{produit["spec"]["np"]}}</span>
 	<span class="prix"><div class="tit">Son Prix:</div> {{babel.numbers.format_currency(produit["spec"]["pri"],"",locale="fr_FR")}} DA</span>
 	<input type="hidden" id='{{str(produit["avt"]["fto"])}}' value="{{produit["spec"]["pri"]}}"/>
-	<span class="etat"><div class="tit">&Eacute;tat du Produit: </div>{{produit["spec"]["eta"].upper()}}</span>
+	<span class="etat"><div class="tit">&Eacute;tat du Produit: </div>
+	{% if produit["spec"]["eta"] == 'se' %}
+	Sous-Emballage.
+	{% elif produit["spec"]["eta"] == 'be' %}
+	Bon &Eacute;tat.
+	{% elif produit["spec"]["eta"] == 'ac' %}
+	Acceptable.
+	{% end %}
+	</span>
 	<span class="desc"><div class="tit"> Description:</div> {{produit["spec"]["dsp"]}}</span>
 	<span><div class="tit">Publi&eacute; Le </div><code>{{str(produit["spec"]["dt"])[0:10]}} &agrave; {{str(produit["spec"]["dt"])[11:16]}}</code></span>
 	<span><div class="tit">Acc&egrave;pte l'&Eacute;change: </div>{{produit["spec"]["chng"].upper()}}</span>

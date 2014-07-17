@@ -88,20 +88,25 @@
 	</form>
 
 {% if "cmn" in parr["pup"][0].keys() %}
+
 {% for i in parr["pup"][0]["cmn"] %}
+
 <div class="commentaire">
 <a title="Visiter les produits de {{i["pse"]}}" href="/search-pseudo?pseudo={{i["pse"]}}&s=0" ><img src="{{avat[parr["pup"][0]["cmn"].index(i)]}}" height="128" class="commenter"/></a>
 <span><a title="Visiter les produits de {{i["pse"]}}" href="/search-pseudo?pseudo={{i["pse"]}}&s=0" >{{i["pse"]}}</a></span>
 <span><code>Publi&eacute; le {{i["id"][:10]}} &agrave; {{i["id"][11:]}}</code></span>
 <span><p>{{i["txt"]}}</p></span> 
-	<form method="post" action="/bad" id="bad" onsubmit="document.getElementById('report').disabled = 1">
+{#
+	<form method="post" action="#" id="bad" onsubmit="document.getElementById('report').disabled = 1">
 		{% raw xsrf_form_html() %}
 		<input type="hidden" value="{{b64encode(i["id"])}}" name="id"/>
 		<input type="submit" value="Reporter?" onclick="window.alert('Merci d\'avoir alerté.')" id="report"/>
 	</form>
+#}
 </div>
 {% end %}
 {% end %}
+
 </div>
 
 </body>

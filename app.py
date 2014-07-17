@@ -4,13 +4,12 @@
 import tornado.web
 import tornado.httpserver
 import tornado.ioloop
-import tornado.options
 from tornado.options import define, options
 import handlers, os
 from motor.web import GridFSHandler
 
 #trying to make a random port number because Heroku dont like the 8000 number?
-define("port",default=8196,type=int)
+define("port",default=8000,type=int)
 
 urls = [
     (r"/", handlers.MainHandler),
@@ -45,7 +44,7 @@ urls = [
     (r"/info/*([a-zA-Z0-9]+)*", handlers.Produit),
     (r"/rabais/([a-zA-Z0-9=]+)", handlers.Urls),
     (r"/report", handlers.Report),
-    (r"/bad", handlers.BadComment),
+   # (r"/bad", handlers.BadComment),
         
    # (r"/google", handlers.GCompare),
     (r"/amazon", handlers.ACompare),
@@ -64,12 +63,10 @@ urls = [
 settings = dict({
     "template_path": os.path.join(os.path.dirname(__file__),"templates"),
     "static_path": os.path.join(os.path.dirname(__file__),"static"),
-    "cookie_secret": "fDÝŽ˜Óe~I«öªÔè>È-ÝÿòÁuÙX", # avec os.urandom(un chiffre) il aura du mal le pauvre pirate a deviner la cle secrete
+    "cookie_secret": os.urandom(10), # avec os.urandom(un chiffre) il aura du mal le pauvre pirate a deviner la cle secrete
     "xsrf_cookies": True,
-    "debug": False,
     "gzip": True,
     "login_url": "/#login", # c ici que le decorateur @tornado.web.authenticated renvoie l'utilisateur s'il n'est pas 'logged in'
-    "site_url":"http://localhost:8000",
 })
 
 application = tornado.web.Application(urls,**settings)

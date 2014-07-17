@@ -21,10 +21,10 @@ from latlong import validatorE, validatorP, villes # import functions from an ex
 import simpleencode # library to use a string to encode another string
 from maill import send_email # sadly this is using smtp which is blocking, only for test, uncomment to try it
 
-#let try some hack...
+
 #this is only used for mongoHQ, remove the uri from the db to connect by default to your machine,
 uri = "mongodb://alien:12345@kahana.mongohq.com:10067/essog"
-db = motor.MotorClient(uri).essog #initialize the connection to the mongodb modif
+db = motor.MotorClient(uri).essog  #initialize the connection to the mongodb modif
 
 hashh = passlib.hash.pbkdf2_sha512 # pbkdf2 is the one that worked here on windows, BCrypt and SCrypt uses C extension to speed up operation, which dident build on my pc, you can try them on your linux box, it will work
 
@@ -41,8 +41,8 @@ Associate_Tag = ""
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         a = self.request.headers["User-Agent"]
-        #name = user_agents.parse(a).browser.family
         name = user_agents.parse(a)
+        print name.browser
         if name.is_pc:
             if (name.browser.family == 'Chrome') and (name.browser.version[0]>=30):
                 self.render("acc.html")
@@ -54,7 +54,7 @@ class MainHandler(tornado.web.RequestHandler):
                 self.render("browser.html")
         else:
             self.write('mazal el hal chwyia 3la les portables ^_^')
-        #version = int(user_agents.parse(a).browser.version_string[:2])
+            
 
 class ErrorHandler(tornado.web.RequestHandler):
     def get(self):
@@ -152,8 +152,7 @@ class Statut(tornado.web.RequestHandler):
     def post(self):
         t1 = datetime.date.today()
         minyear = t1.year - 18
-        t2 = t1.replace(year = minyear)
-        t3 = t2.isoformat()
+        t3 = t1.replace(year = minyear).isoformat()
         titre = self.get_argument("statut")
         self.render("register.html", titre=titre, datemin = t3)
 
@@ -187,7 +186,6 @@ class Registration(BaseHandler):
                 '''
 
                 image = Image.open(StringIO.StringIO(buf=avat))
-                type = image.format
                 (x, y) = image.size
                 if x < y:
                     orientation = "portrait"
@@ -300,7 +298,6 @@ class Vendre(BaseHandler):
         namep = self.get_argument("namep").lower()
         description = self.get_argument("description")[:160].lower()
         tags = [ tag.lower() for tag in self.get_arguments("tags")]
-        print (namep, description, tags)
         #tag = [x.strip('\\\"\',!*&^%#$;:+') for x in set(tags.split())] this will cut  a sentence to words, uncomment it if you want to use it
         if "" in (namep,description, tags):
             self.redirect("/pirate")
@@ -320,7 +317,6 @@ class Vendre(BaseHandler):
                 avat = ava["body"]
                 avctype = ava["content_type"]
                 image = Image.open(StringIO.StringIO(buf=avat))
-                type = image.format
                 (x, y) = image.size
                 if x < y:
                     orientation = "portrait"
@@ -366,15 +362,14 @@ class Search(BaseHandler):
     @tornado.web.authenticated
     @tornado.gen.coroutine
     def post(self):
-        debut = time.time()
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)
-        email = info["_id"]
         center = info["adr"]["cor"]
 
         pseudo = self.get_argument("pseudo").lower()
         if not pseudo:
             pseudo = ""
+
         tel = self.get_argument("tel")
         if not tel:
             tel = "0700000000"
@@ -486,7 +481,7 @@ class SearchePseudo(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename)
+                        avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -524,7 +519,7 @@ class SearchTel(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename)
+                        avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -562,7 +557,7 @@ class SearchNom(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename)
+                        avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -600,7 +595,7 @@ class SearchDescr(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename)
+                        avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -639,7 +634,7 @@ class SearchPrixCr(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename)
+                        avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -678,7 +673,7 @@ class SearchPrixDec(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename)
+                        avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -716,7 +711,7 @@ class SearchBled(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename)
+                        avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -755,7 +750,7 @@ class SearchCoord(BaseHandler):
                 for prod in produit:
                     for i in prod["pup"]:
                         gridout = yield fs.get(i["avt"]["fto"])
-                        name = avatar.append(gridout.filename)
+                        avatar.append(gridout.filename)
                 produits = prod["pup"]
             else:
                 produits = []
@@ -809,13 +804,11 @@ class MesVentes(BaseHandler):
             fs = motor.MotorGridFS(db)
             produits = yield db.users.find_one({"_id":email}, {"pup":1})
             avatar = []
-            nbr = 0
             try:
                 produit = produits["pup"]
-                nbr = len(produit)
                 for pro in produit:
                     gridout = yield fs.get(pro["avt"]["fto"])
-                    name = avatar.append(gridout.filename)
+                    avatar.append(gridout.filename)
             except (KeyError, TypeError):
                 produit = []
             self.render("ventes.html", email=email, produits=produit, avatar=avatar, op="vente", npages=0, lin="", link="", replace="", s=0)
@@ -840,13 +833,11 @@ class MesAchats(BaseHandler):
             except KeyError:
                 achat = []
             avatar = []
-            nbr = 0
             try:
                 produit = produits["pdn"]
-                nbr = len(produit)
                 for pro in produit:
                     gridout = yield fs.get(pro["avt"]["fto"])
-                    name = avatar.append(gridout.filename)
+                    avatar.append(gridout.filename)
             except (KeyError, TypeError, IndexError):
                 produit = []
             except NoFile as e: # we will catch the ObjectId and then delete it!
@@ -889,7 +880,6 @@ class Enlever(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
         user = self.get_secure_cookie("mechtari")
-        link = self.request.uri
         info = json_util.loads(user)
         email = info["_id"]
         prod = self.get_argument("enleve")
@@ -919,7 +909,7 @@ class Produit(BaseHandler):
                 cmnt = parr["pup"][0]["cmn"] # this one for the comments avatar pictures
                 for pic in cmnt:
                     gridout = yield fs.get(pic["fto"])
-                    name = avat.append(gridout.filename)
+                    avat.append(gridout.filename)
             except (KeyError, TypeError):
                 cmnt = []
 
@@ -947,20 +937,17 @@ class Comment(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
         user = self.get_secure_cookie("mechtari")
-        link = self.request.uri
         info = json_util.loads(user)
         email = info["_id"]
         pseudo = info["prs"]["pseu"]
         avat = info["avt"]["avt"]
-        print avat
-        fs = motor.MotorGridFS(db)
         cmnt = self.get_argument("description")[:160]
         i = self.get_argument("id")
         id = simpleencode.b64decode(i)[::-1] # dumb technique but it will make him struggle for a moment :p
         tim = int(time.time())
         yield db.users.update({"pup.avt.fto": ObjectId("{0}".format(id))},{"$push":{"pup.$.cmn":{"prs":email, "pse":pseudo, "fto":avat, "txt": cmnt, "id":time.strftime("%d.%m.%Y %H:%M:%S", time.localtime(tim))}}})
         self.redirect("/info?id={0}".format(id))
-
+'''
 # todo, report bad comment, sadly art this time (mongodb 2.4.4) cant add a field in level 2 of documents
 class BadComment(BaseHandler):
     @tornado.web.authenticated
@@ -972,9 +959,9 @@ class BadComment(BaseHandler):
         email = info["_id"]
         code = self.get_argument("id")
         id = simpleencode.b64decode(code)
-        h = yield db.users.update({"pup.cmn.id":id}, {"$addToSet":{"pup.$.cmn":{"abus":email}}})
+        # waiting for this https://jira.mongodb.org/browse/SERVER-831
         self.render("uploaded.html", op="report")
-
+'''
 '''
 # un comment this class to use google compare instead of amazon compare
 class GCompare(BaseHandler):
@@ -1030,7 +1017,6 @@ class Rese(BaseHandler):
             code = "".join(random.choice(string.digits) for i in range(4))
             asci = simpleencode.encode(str(timr), code)
             pas = yield db.users.find_one({"_id": email})
-            print pas
             if pas :
                 yield db.users.update({"_id": email}, {"$push":{"reset":{"timr":asci,"code":code}}})
                 send_email(email, asci, code) # uncomment this line if you want to send the complete link to your email box, else, you must get the link from the database and forge it by your self localhost:8000/resetYourCode
@@ -1045,7 +1031,6 @@ class Reset(BaseHandler):
     def get(self, uri):
         uri = self.request.uri
         try:
-            debut = time.time()
             tim = uri[6:] #remove /reset/ from the uri
             cod = yield db.users.find_one({"reset.timr":tim})
             code = cod["reset"][-1]["code"]
@@ -1155,7 +1140,6 @@ class Urls(BaseHandler):
     def get(self, url):
         user = self.get_secure_cookie("mechtari")
         info = json_util.loads(user)
-        email = info["_id"]
         pseudo = info["prs"]["pseu"]
         url = self.request.uri[8:]
         a = yield db.link.find_one({"_id":url})
@@ -1172,7 +1156,6 @@ class Admin(AdminHandler):
     @tornado.web.authenticated
     def get(self):
         # look at the results returned from google ;)
-        print self.current_user
         if tornado.escape.xhtml_escape(self.current_user["email"]) == "emailerdz@gmail.com": # here you put your email (admin) or all those using gmail will access to your admin page if they got the url ;)
             self.redirect("/all")
         else:
@@ -1218,7 +1201,7 @@ class AllProduits(AdminHandler):
             for prod in produit:
                 for i in prod["pup"]:
                     gridout = yield fs.get(i["avt"]["fto"])
-                    name = avatar.append(gridout.filename)
+                    avatar.append(gridout.filename)
             produits = prod["pup"]
         else:
             produits = []
@@ -1249,7 +1232,7 @@ class Perim(AdminHandler):
             for prod in produit:
                 for i in prod["pup"]:
                     gridout = yield fs.get(i["avt"]["fto"])
-                    name = avatar.append(gridout.filename)
+                    avatar.append(gridout.filename)
             produits = prod["pup"]
         else:
             produits = []
@@ -1278,7 +1261,7 @@ class AbuProduits(AdminHandler):
             for prod in produit:
                 for i in prod["pup"]:
                     gridout = yield fs.get(i["avt"]["fto"])
-                    name = avatar.append(gridout.filename)
+                    avatar.append(gridout.filename)
             produits = prod["pup"]
         else:
             produits = []

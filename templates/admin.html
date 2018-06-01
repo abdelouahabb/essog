@@ -54,11 +54,11 @@
 {% end %}
 <div id="pages">
 {% if len(produits) > 0 %}
-<a href="{{lin+'?'+'s'+'='+str(s-5)}}" id="prev" title="Afficher les R&eacute;sultats Pr&eacute;c&eacute;dent">&nbsp;</a>
+<a href="{{''.join(map(str, [lin, '?', 's', '=', s-5] ) )}}" id="prev" title="Afficher les R&eacute;sultats Pr&eacute;c&eacute;dent">&nbsp;</a>
 {% end %}
 
 {% if npages > 0 %}
-<a href="{{lin+'?'+'s'+'='+str(s+5)}}" id="next" title="Afficher les R&eacute;sultats Suivant">&nbsp;</a>
+<a href="{{''.join(map(str, [lin, '?', 's', '=', s+5] }}" id="next" title="Afficher les R&eacute;sultats Suivant">&nbsp;</a>
 {% end %}
 </div>
 </body>
